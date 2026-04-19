@@ -1,0 +1,10 @@
+#include <QtCore/QtCore>
+#include "qhttp.h"
+#include "qhostinfo.h"
+#include "qhostaddress.h"
+#include "qftp.h"
+#include "qtcpserver.h"
+#include "qabstractsocket.h"
+#include "qurlinfo.h"
+#include "qudpsocket.h"
+#include "qtcpsocket.h"

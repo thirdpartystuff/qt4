@@ -1,0 +1,108 @@
+/****************************************************************************
+**
+** Copyright (C) 1992-2005 Trolltech AS. All rights reserved.
+**
+** This file is part of the Qt Designer of the Qt Toolkit.
+**
+** This file may be used under the terms of the GNU General Public
+** License version 2.0 as published by the Free Software Foundation
+** and appearing in the file LICENSE.GPL included in the packaging of
+** this file.  Please review the following information to ensure GNU
+** General Public Licensing requirements will be met:
+** http://www.trolltech.com/products/qt/opensource.html
+**
+** If you are unsure which license is appropriate for your use, please
+** review the following information:
+** http://www.trolltech.com/products/qt/licensing.html or contact the
+** sales department at sales@trolltech.com.
+**
+** This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+** WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+**
+****************************************************************************/
+
+#include "flagbox_model_p.h"
+#include <QtCore/qdebug.h>
+
+using namespace qdesigner_internal;
+
+FlagBoxModel::FlagBoxModel(QObject *parent)
+    : QAbstractItemModel(parent)
+{
+}
+
+FlagBoxModel::~FlagBoxModel()
+{
+}
+
+void FlagBoxModel::setItems(const QList<FlagBoxModelItem> &items)
+{
+    m_items = items;
+    emit reset();
+}
+
+int FlagBoxModel::rowCount(const QModelIndex &parent) const
+{
+    return !parent.isValid() ? m_items.count() : 0;
+}
+
+int FlagBoxModel::columnCount(const QModelIndex &parent) const
+{
+    Q_UNUSED(parent);
+    return 1;
+}
+
+QModelIndex FlagBoxModel::parent(const QModelIndex &index) const
+{
+    Q_UNUSED(index);
+    return QModelIndex();
+}
+
+QModelIndex FlagBoxModel::index(int row, int column, const QModelIndex &parent) const
+{
+    Q_UNUSED(parent);
+    return createIndex(row, column, 0);
+}
+
+QVariant FlagBoxModel::data(const QModelIndex &index, int role) const
+{
+    Q_ASSERT(index.row() != -1);
+
+    const FlagBoxModelItem &item = m_items.at(index.row());
+
+    switch (role) {
+    case Qt::DisplayRole:
+    case Qt::EditRole:
+        return item.name();
+
+    case Qt::CheckStateRole:
+        return item.isChecked() ? Qt::Checked : Qt::Unchecked;
+
+    default:
+        return QVariant();
+    } // end switch
+}
+
+bool FlagBoxModel::setData(const QModelIndex &index, const QVariant &value, int role)
+{
+    Q_ASSERT(index.row() != -1);
+
+    FlagBoxModelItem &item = m_items[index.row()];
+
+    switch (role) {
+    case Qt::EditRole:
+    case Qt::DisplayRole: {
+        item.setName(value.toString());
+    } return true;
+
+    case Qt::CheckStateRole: {
+        Qt::CheckState state = static_cast<Qt::CheckState>(value.toInt());
+        item.setChecked(state == Qt::Unchecked ? false : true);
+        emit dataChanged(index, index);
+    } return true;
+
+    default: break;
+    } // end switch
+
+    return false;
+}

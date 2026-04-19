@@ -1,0 +1,71 @@
+/****************************************************************************
+**
+** Copyright (C) 1992-2005 Trolltech AS. All rights reserved.
+**
+** This file is part of the QtGui module of the Qt Toolkit.
+**
+** This file may be used under the terms of the GNU General Public
+** License version 2.0 as published by the Free Software Foundation
+** and appearing in the file LICENSE.GPL included in the packaging of
+** this file.  Please review the following information to ensure GNU
+** General Public Licensing requirements will be met:
+** http://www.trolltech.com/products/qt/opensource.html
+**
+** If you are unsure which license is appropriate for your use, please
+** review the following information:
+** http://www.trolltech.com/products/qt/licensing.html or contact the
+** sales department at sales@trolltech.com.
+**
+** This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+** WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+**
+****************************************************************************/
+
+#ifndef QSTACKEDWIDGET_H
+#define QSTACKEDWIDGET_H
+
+#include <QtGui/qframe.h>
+
+QT_MODULE(Gui)
+
+#ifndef QT_NO_STACKEDWIDGET
+
+class QStackedWidgetPrivate;
+
+class Q_GUI_EXPORT QStackedWidget : public QFrame
+{
+    Q_OBJECT
+
+    Q_PROPERTY(int currentIndex READ currentIndex WRITE setCurrentIndex NOTIFY currentChanged)
+    Q_PROPERTY(int count READ count)
+public:
+    explicit QStackedWidget(QWidget *parent=0);
+    ~QStackedWidget();
+
+    int addWidget(QWidget *w);
+    int insertWidget(int index, QWidget *w);
+    void removeWidget(QWidget *w);
+
+    QWidget *currentWidget() const;
+    int currentIndex() const;
+
+    int indexOf(QWidget *) const;
+    QWidget *widget(int) const;
+    int count() const;
+
+public slots:
+    void setCurrentIndex(int index);
+    void setCurrentWidget(QWidget *w);
+
+signals:
+    void currentChanged(int);
+    void widgetRemoved(int index);
+
+
+private:
+    Q_DISABLE_COPY(QStackedWidget)
+    Q_DECLARE_PRIVATE(QStackedWidget)
+};
+
+#endif // QT_NO_STACKEDWIDGET
+#endif // QSTACKEDWIDGET_H
