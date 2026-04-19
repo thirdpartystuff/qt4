@@ -325,7 +325,7 @@ void QTextDocumentPrivate::insertBlock(const QChar &blockSeparator,
     Q_ASSERT(blocks.length() == fragments.length());
 
     QTextUndoCommand c = { QTextUndoCommand::BlockInserted, true,
-                      op, charFormat, strPos, pos, { blockFormat } };
+                      (quint8)op, charFormat, (quint32)strPos, (quint32)pos, { blockFormat } };
 
     appendUndoItem(c);
     Q_ASSERT(undoState == undoStack.size());
@@ -351,7 +351,7 @@ void QTextDocumentPrivate::insert(int pos, int strPos, int strLength, int format
     beginEditBlock();
 
     QTextUndoCommand c = { QTextUndoCommand::Inserted, true,
-                      QTextUndoCommand::MoveCursor, format, strPos, pos, { strLength } };
+                      QTextUndoCommand::MoveCursor, format, (quint32)strPos, (quint32)pos, { strLength } };
     appendUndoItem(c);
     Q_ASSERT(undoState == undoStack.size());
 
@@ -492,7 +492,7 @@ void QTextDocumentPrivate::remove(int pos, int length, QTextUndoCommand::Operati
 
         QTextFragmentData *X = fragments.fragment(x);
         QTextUndoCommand c = { QTextUndoCommand::Removed, true,
-                          op, X->format, X->stringPosition, key, { X->size } };
+                          (quint8)op, X->format, (quint32)X->stringPosition, key, { (int)X->size } };
 
         if (key+1 != blocks.position(b)) {
 //	    qDebug("remove_string from %d length %d", key, X->size);
@@ -554,7 +554,7 @@ void QTextDocumentPrivate::setCharFormat(int pos, int length, const QTextCharFor
         }
 
         QTextUndoCommand c = { QTextUndoCommand::CharFormatChanged, true, QTextUndoCommand::MoveCursor, oldFormat,
-                          0, pos, { length } };
+                          0, (quint32)pos, { length } };
         appendUndoItem(c);
 
         pos += length;
@@ -612,7 +612,7 @@ void QTextDocumentPrivate::setBlockFormat(const QTextBlock &from, const QTextBlo
         block(it)->invalidate();
 
         QTextUndoCommand c = { QTextUndoCommand::BlockFormatChanged, true, QTextUndoCommand::MoveCursor, oldFormat,
-                              0, it.position(), { 1 } };
+                              0, (quint32)it.position(), { 1 } };
         appendUndoItem(c);
 
         if (group != oldGroup) {

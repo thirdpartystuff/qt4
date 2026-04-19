@@ -22,6 +22,7 @@
 ****************************************************************************/
 
 #include "private/qpnghandler_p.h"
+#ifndef QT_NO_IMAGEFORMAT_PNG
 
 #include <qiodevice.h>
 #include <qimage.h>
@@ -708,3 +709,4 @@ QByteArray QPngHandler::name() const
 {
     return "png";
 }
+#endif

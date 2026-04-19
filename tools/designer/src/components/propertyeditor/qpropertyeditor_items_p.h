@@ -433,6 +433,7 @@ public:
     QVariant decoration() const;
 };
 
+#ifndef QT_NO_DATETIMEEDIT
 class QT_PROPERTYEDITOR_EXPORT DateTimeProperty: public AbstractProperty<QDateTime>
 {
 public:
@@ -471,6 +472,7 @@ public:
     void updateEditorContents(QWidget *editor);
     void updateValue(QWidget *editor);
 };
+#endif
 
 class QT_PROPERTYEDITOR_EXPORT CursorProperty: public AbstractProperty<QCursor>
 {

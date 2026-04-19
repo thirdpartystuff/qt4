@@ -280,7 +280,7 @@ void QDesktopWidgetPrivate::cleanup()
     Instead of using QDesktopWidget directly, use QApplication::desktop().
 */
 QDesktopWidget::QDesktopWidget()
-    : QWidget(*new QDesktopWidgetPrivate, 0, Qt::WType_Desktop)
+    : QWidget(*new QDesktopWidgetPrivate, 0, Qt::Desktop)
 {
     setObjectName("desktop");
     QDesktopWidgetPrivate::init(this);

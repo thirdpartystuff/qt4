@@ -128,7 +128,7 @@ void QThreadPrivate::finish(void *arg, bool lockAnyway)
 
 Qt::HANDLE QThread::currentThreadId()
 {
-    return (Qt::HANDLE)GetCurrentThreadId();
+    return (Qt::HANDLE)(size_t)GetCurrentThreadId();
 }
 
 QThread *QThread::currentThread()

@@ -233,7 +233,7 @@ bool QCoreApplication::winEventFilter(MSG *msg, long *result)        // Windows 
 // The values below should never change. Note that none of the usual
 // WM_...FIRST & WM_...LAST values are in the list, as they normally have other
 // WM_... representations
-struct {
+static const struct {
     uint WM;
     const char* str;
 } knownWM[] =
@@ -554,7 +554,7 @@ struct FLAG_STRING_STRUCT
 
 FLAG_STRING_STRUCT FLAG_STRING(int value = 0, const char *c = 0)
 {
-    FLAG_STRING_STRUCT s = {value, c};
+    FLAG_STRING_STRUCT s = {(uint)value, c};
     return s;
 }
 
@@ -970,14 +970,14 @@ QString decodeMSG(const MSG& msg)
                 LPWINDOWPOS winPos = (LPWINDOWPOS)lParam;
                 if (!winPos)
                     break;
-                QString hwndAfter = valueCheck((uint)winPos->hwndInsertAfter,
-                                          FLAG_STRING((uint)HWND_BOTTOM,    "HWND_BOTTOM"),
-                                          FLAG_STRING((int)HWND_NOTOPMOST, "HWND_NOTOPMOST"),
-                                          FLAG_STRING((uint)HWND_TOP,       "HWND_TOP"),
-                                          FLAG_STRING((int)HWND_TOPMOST,   "HWND_TOPMOST"),
+                QString hwndAfter = valueCheck((uint)(size_t)winPos->hwndInsertAfter,
+                                          FLAG_STRING((uint)(size_t)HWND_BOTTOM,    "HWND_BOTTOM"),
+                                          FLAG_STRING((int)(ptrdiff_t)HWND_NOTOPMOST, "HWND_NOTOPMOST"),
+                                          FLAG_STRING((uint)(size_t)HWND_TOP,       "HWND_TOP"),
+                                          FLAG_STRING((int)(ptrdiff_t)HWND_TOPMOST,   "HWND_TOPMOST"),
                                           FLAG_STRING());
                 if (hwndAfter.size() == 0)
-                    hwndAfter = QString::number((uint)winPos->hwndInsertAfter, 16);
+                    hwndAfter = QString::number((uint)(size_t)winPos->hwndInsertAfter, 16);
                 QString flags = flagCheck(winPos->flags,
                                           FLGSTR(SWP_DRAWFRAME),
                                           FLGSTR(SWP_FRAMECHANGED),

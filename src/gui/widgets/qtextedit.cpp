@@ -3075,5 +3075,8 @@ void QTextEdit::ensureCursorVisible()
     Use setTextColor() instead.
 */
 
+#ifdef _MSC_VER
+#pragma warning(disable:4838)
+#endif
 #include "moc_qtextedit.cpp"
 #endif // QT_NO_TEXTEDIT

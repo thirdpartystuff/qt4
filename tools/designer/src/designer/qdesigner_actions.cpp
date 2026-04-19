@@ -28,7 +28,7 @@
 #include "qdesigner_settings.h"
 #include "newform.h"
 #include "versiondialog.h"
-#include "oublietteview.h"
+//#include "oublietteview.h"
 #include "saveformastemplate.h"
 #include "plugindialog.h"
 #include "formwindowsettings.h"
@@ -38,7 +38,7 @@
 #include <qdesigner_formbuilder_p.h>
 #include <qtundo_p.h>
 
-#include <QtAssistant/QAssistantClient>
+//#include <QtAssistant/QAssistantClient>
 
 #include <QtGui/QStyleFactory>
 #include <QtGui/QAction>
@@ -882,11 +882,13 @@ void QDesignerActions::showWhatsNew()
 
 void QDesignerActions::showHelp(const QString &url)
 {
+    /*
     if (!m_assistantClient)
         m_assistantClient
             = new QAssistantClient(QLibraryInfo::location(QLibraryInfo::BinariesPath), this);
     m_assistantClient->showPage(QLibraryInfo::location(QLibraryInfo::DocumentationPath)
                                 + QLatin1String("/html/") + url);
+    */
 }
 
 void QDesignerActions::aboutDesigner()
@@ -894,10 +896,12 @@ void QDesignerActions::aboutDesigner()
     VersionDialog mb(core()->topLevel());
     mb.setWindowTitle(tr("About Qt Designer"));
     if (mb.exec()) {
+        /*
         OublietteView *oubliette = new OublietteView;
         oubliette->setAttribute(Qt::WA_DeleteOnClose);
         oubliette->setMinimumSize(800, 600);
         oubliette->show();
+        */
     }
 }
 

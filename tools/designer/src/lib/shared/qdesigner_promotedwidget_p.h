@@ -32,7 +32,7 @@
 // We mean it.
 //
 
-#ifndef QDESIGNER_PROMOTED_WIDGET_h
+#ifndef QDESIGNER_PROMOTED_WIDGET_H
 #define QDESIGNER_PROMOTED_WIDGET_H
 
 #include <QtCore/QVariant>

@@ -242,7 +242,7 @@ inline bool QAbstractItemModel::removeColumn(int acolumn, const QModelIndex &apa
 inline QModelIndex QAbstractItemModel::createIndex(int arow, int acolumn, void *adata) const
 { return QModelIndex(arow, acolumn, adata, this); }
 inline QModelIndex QAbstractItemModel::createIndex(int arow, int acolumn, int aid) const
-{ return QModelIndex(arow, acolumn, reinterpret_cast<void*>(aid), this); }
+{ return QModelIndex(arow, acolumn, reinterpret_cast<void*>(ptrdiff_t(aid)), this); }
 
 class Q_CORE_EXPORT QAbstractTableModel : public QAbstractItemModel
 {

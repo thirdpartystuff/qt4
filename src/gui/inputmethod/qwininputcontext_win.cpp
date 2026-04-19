@@ -31,6 +31,7 @@
 #include "qtextformat.h"
 
 //#define Q_IME_DEBUG
+extern bool qt_sendSpontaneousEvent(QObject*, QEvent*);
 
 /* Active Input method support on Win95/98/NT */
 #include <objbase.h>

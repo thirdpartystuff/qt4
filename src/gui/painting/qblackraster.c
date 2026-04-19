@@ -589,12 +589,12 @@ New_Profile( RAS_ARGS TStates  aState )
     {
     case Ascending_State:
         ras.cProfile->flow = Flow_Up;
-        QT_FT_TRACE6( "\nNew ascending profile = %lx\n", (long)ras.cProfile );
+        QT_FT_TRACE6( "\nNew ascending profile = %lx\n", (long)(ptrdiff_t)ras.cProfile );
         break;
 
     case Descending_State:
         ras.cProfile->flow = Flow_Down;
-        QT_FT_TRACE6( "\nNew descending profile = %lx\n", (long)ras.cProfile );
+        QT_FT_TRACE6( "\nNew descending profile = %lx\n", (long)(ptrdiff_t)ras.cProfile );
         break;
 
     default:
@@ -647,7 +647,7 @@ End_Profile( RAS_ARG )
     if ( h > 0 )
     {
         QT_FT_TRACE6( "Ending profile %lx, start = %ld, height = %ld top=%p\n\n",
-                   (long)ras.cProfile, ras.cProfile->start, h,ras.top );
+                   (long)(ptrdiff_t)ras.cProfile, ras.cProfile->start, (long)h,ras.top );
 
         oldProfile           = ras.cProfile;
         ras.cProfile->height = (long)h;

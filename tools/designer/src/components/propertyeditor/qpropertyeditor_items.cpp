@@ -866,6 +866,7 @@ QString SizePolicyProperty::toString() const
     return AbstractPropertyGroup::toString();
 }
 
+#ifndef QT_NO_DATETIMEEDIT
 // -------------------------------------------------------------------------
 DateTimeProperty::DateTimeProperty(const QDateTime &value, const QString &name)
     : AbstractProperty<QDateTime>(value, name)
@@ -994,6 +995,7 @@ void TimeProperty::updateValue(QWidget *editor)
 
     }
 }
+#endif //QT_NO_DATETIMEEDIT
 
 // -------------------------------------------------------------------------
 CursorProperty::CursorProperty(const QCursor &value, const QString &name)

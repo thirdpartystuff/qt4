@@ -22,6 +22,10 @@
 #include <windows.h>
 #include <limits.h>
 
+#ifdef _MSC_VER
+#define PATH_MAX MAX_PATH
+#endif
+
 #if !defined(_WIN32_WINNT) || (_WIN32_WINNT-0 < 0x0500)
 typedef enum {
     NameUnknown		  = 0, 

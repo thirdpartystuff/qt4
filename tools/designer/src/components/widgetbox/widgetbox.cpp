@@ -527,6 +527,22 @@ WidgetBoxTreeView::Category WidgetBoxTreeView::domToCategory(const QDomElement &
                                 ? Widget::Custom
                                 : Widget::Default;
 
+        QByteArray className = widget_elt.attribute("class").toLatin1();
+      #ifdef QT_NO_LCDNUMBER
+        if (className == "QLCDNumber")
+            continue;
+      #endif
+      #ifdef QT_NO_DIAL
+        if (className == "QDial")
+            continue;
+      #endif
+      #ifdef QT_NO_DATETIMEEDIT
+        if (className == "QDateEdit" ||
+            className == "QTimeEdit" ||
+            className == "QDateTimeEdit")
+            continue;
+      #endif
+
         Widget w(widget_elt.attribute(QLatin1String("name")),
                     domToString(widget_elt),
                     widget_elt.attribute(QLatin1String("icon")),

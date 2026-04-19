@@ -24,7 +24,7 @@
 #ifndef QLAYOUTWIDGET_PROPERTYSHEET_H
 #define QLAYOUTWIDGET_PROPERTYSHEET_H
 
-#include <qdesigner_propertysheet_p.h>
+#include <QtDesigner/private/qdesigner_propertysheet_p.h>
 
 class QLayoutWidget;
 

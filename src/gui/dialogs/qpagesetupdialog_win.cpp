@@ -28,6 +28,7 @@
 #include <private/qprintengine_win_p.h>
 #include <private/qabstractpagesetupdialog_p.h>
 
+#ifndef QT_NO_PRINTDIALOG
 class QPageSetupDialogPrivate : public QAbstractPageSetupDialogPrivate
 {
 };
@@ -81,3 +82,4 @@ int QPageSetupDialog::exec()
 
     return result;
 }
+#endif

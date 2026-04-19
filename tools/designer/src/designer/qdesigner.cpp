@@ -109,6 +109,7 @@ void QDesigner::initialize()
         }
     }
 
+  #ifndef QT_NO_TRANSLATION
     QTranslator *translator = new QTranslator;
     QTranslator *qtTranslator = new QTranslator;
     translator->load(QLatin1String("designer_") + QLocale::system().name().toLower(), resourceDir);
@@ -122,6 +123,7 @@ void QDesigner::initialize()
         QMetaObject::invokeMethod(this, "quit", Qt::QueuedConnection);
         return;
     }
+  #endif
     
     m_workbench = new QDesignerWorkbench();
 

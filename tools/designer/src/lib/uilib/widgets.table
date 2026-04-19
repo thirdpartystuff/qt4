@@ -2,15 +2,21 @@
 // widgets
 DECLARE_WIDGET(QCheckBox, "text")
 DECLARE_WIDGET(QComboBox, "")
+#ifndef QT_NO_DATETIMEEDIT
 DECLARE_WIDGET(QDateTimeEdit, "")
 DECLARE_WIDGET(QDateEdit, "")
 DECLARE_WIDGET(QTimeEdit, "")
+#endif
+#ifndef QT_NO_DIAL
 DECLARE_WIDGET(QDial, "")
+#endif
 DECLARE_WIDGET(QDialog, "")
 DECLARE_WIDGET(QDockWidget, "")
 DECLARE_WIDGET(QFrame, "")
 DECLARE_WIDGET(QGroupBox, "")
+#ifndef QT_NO_LCDNUMBER
 DECLARE_WIDGET(QLCDNumber, "")
+#endif
 DECLARE_WIDGET(QLabel, "")
 DECLARE_WIDGET(QLineEdit, "")
 DECLARE_WIDGET(QListView, "")

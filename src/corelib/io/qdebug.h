@@ -105,9 +105,9 @@ inline QDebug operator<<(QDebug debug, const QMap<aKey, aT> &map)
     return debug.space();
 }
 
-inline Q_CORE_EXPORT QDebug qDebug() { return QDebug(QtDebugMsg); }
-inline Q_CORE_EXPORT QDebug qWarning() { return QDebug(QtWarningMsg); }
-inline Q_CORE_EXPORT QDebug qCritical() { return QDebug(QtCriticalMsg); }
+inline /*Q_CORE_EXPORT*/ QDebug qDebug() { return QDebug(QtDebugMsg); }
+inline /*Q_CORE_EXPORT*/ QDebug qWarning() { return QDebug(QtWarningMsg); }
+inline /*Q_CORE_EXPORT*/ QDebug qCritical() { return QDebug(QtCriticalMsg); }
 
 #else // QT_NO_DEBUG_STREAM
 

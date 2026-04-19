@@ -119,7 +119,7 @@ QMutexPool::~QMutexPool()
 QMutex *QMutexPool::get(const void *address)
 {
     Q_ASSERT_X(address != 0, "QMutexPool::get()", "'address' argument cannot be zero");
-    int index = int((ulong(address) >> (sizeof(address) >> 1)) % count);
+    int index = int((ulong(size_t(address)) >> (sizeof(address) >> 1)) % count);
 
     if (!mutexes[index]) {
         // mutex not created, create one

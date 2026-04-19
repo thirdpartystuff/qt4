@@ -77,7 +77,12 @@ inline T *v_cast(QVariant::Private *d, T * = 0)
 template <class T>
 inline void v_construct(QVariant::Private *x, const void *copy, T * = 0)
 {
-    if (sizeof(T) > sizeof(QVariant::Private::Data)) {
+  #if __cplusplus >= 201703L
+    if constexpr
+  #else
+    if
+  #endif
+    (sizeof(T) > sizeof(QVariant::Private::Data)) {
         x->data.shared = copy ? new QVariant::PrivateShared(new T(*static_cast<const T *>(copy)))
                               : new QVariant::PrivateShared(new T);
         x->is_shared = true;

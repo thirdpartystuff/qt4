@@ -21,6 +21,7 @@
 **
 ****************************************************************************/
 
+#include <qglobal.h>
 #ifndef QT_NO_PRINTDIALOG
 
 #include "qprintdialog.h"

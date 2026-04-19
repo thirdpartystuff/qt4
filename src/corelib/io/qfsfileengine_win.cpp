@@ -52,9 +52,9 @@ Q_CORE_EXPORT int qt_ntfs_permission_lookup = 0;
 #if !defined(QT_NO_LIBRARY)
 typedef DWORD (WINAPI *PtrGetNamedSecurityInfoW)(LPWSTR, SE_OBJECT_TYPE, SECURITY_INFORMATION, PSID*, PSID*, PACL*, PACL*, PSECURITY_DESCRIPTOR*);
 static PtrGetNamedSecurityInfoW ptrGetNamedSecurityInfoW = 0;
-typedef DECLSPEC_IMPORT BOOL (WINAPI *PtrLookupAccountSidW)(LPCWSTR, PSID, LPWSTR, LPDWORD, LPWSTR, LPDWORD, PSID_NAME_USE);
+typedef /*DECLSPEC_IMPORT*/ BOOL (WINAPI *PtrLookupAccountSidW)(LPCWSTR, PSID, LPWSTR, LPDWORD, LPWSTR, LPDWORD, PSID_NAME_USE);
 static PtrLookupAccountSidW ptrLookupAccountSidW = 0;
-typedef DECLSPEC_IMPORT BOOL (WINAPI *PtrAllocateAndInitializeSid)(PSID_IDENTIFIER_AUTHORITY, BYTE, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, PSID*);
+typedef /*DECLSPEC_IMPORT*/ BOOL (WINAPI *PtrAllocateAndInitializeSid)(PSID_IDENTIFIER_AUTHORITY, BYTE, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, PSID*);
 static PtrAllocateAndInitializeSid ptrAllocateAndInitializeSid = 0;
 typedef VOID (WINAPI *PtrBuildTrusteeWithSidW)(PTRUSTEE_W, PSID);
 static PtrBuildTrusteeWithSidW ptrBuildTrusteeWithSidW = 0;
@@ -62,7 +62,7 @@ typedef VOID (WINAPI *PtrBuildTrusteeWithNameW)(PTRUSTEE_W, unsigned short*);
 static PtrBuildTrusteeWithNameW ptrBuildTrusteeWithNameW = 0;
 typedef DWORD (WINAPI *PtrGetEffectiveRightsFromAclW)(PACL, PTRUSTEE_W, OUT PACCESS_MASK);
 static PtrGetEffectiveRightsFromAclW ptrGetEffectiveRightsFromAclW = 0;
-typedef DECLSPEC_IMPORT PVOID (WINAPI *PtrFreeSid)(PSID);
+typedef /*DECLSPEC_IMPORT*/ PVOID (WINAPI *PtrFreeSid)(PSID);
 static PtrFreeSid ptrFreeSid = 0;
 static TRUSTEE_W currentUserTrusteeW;
 
@@ -105,14 +105,14 @@ static void resolveLibs()
                 PtrVerQueryValueW ptrVerQueryValueW = (PtrVerQueryValueW)GetProcAddress(versionHnd, "VerQueryValueW");
                 if(ptrGetFileVersionInfoSizeW && ptrGetFileVersionInfoW && ptrVerQueryValueW) {
                     DWORD fakeHandle;
-                    DWORD versionSize = ptrGetFileVersionInfoSizeW(L"secur32.dll", &fakeHandle);
+                    DWORD versionSize = ptrGetFileVersionInfoSizeW((WCHAR*)L"secur32.dll", &fakeHandle);
                     if(versionSize) {
                         LPVOID versionData;
                         versionData = malloc(versionSize);
-                        if(ptrGetFileVersionInfoW(L"secur32.dll", 0, versionSize, versionData)) {
+                        if(ptrGetFileVersionInfoW((WCHAR*)L"secur32.dll", 0, versionSize, versionData)) {
                             UINT puLen;
                             VS_FIXEDFILEINFO *pLocalInfo;
-                            if(ptrVerQueryValueW(versionData, L"\\", (void**)&pLocalInfo, &puLen)) {
+                            if(ptrVerQueryValueW(versionData, (WCHAR*)L"\\", (void**)&pLocalInfo, &puLen)) {
                                 WORD wVer1, wVer2, wVer3, wVer4;
                                 wVer1 = HIWORD(pLocalInfo->dwFileVersionMS);
                                 wVer2 = LOWORD(pLocalInfo->dwFileVersionMS);

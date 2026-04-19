@@ -1,0 +1,19 @@
+
+#define QT_EDITION (QT_MODULE_CORE | \
+                    QT_MODULE_GUI | \
+                    QT_MODULE_NETWORK | \
+                    QT_MODULE_OPENGL | \
+                    QT_MODULE_XML)
+
+#cmakedefine QT_BIG_ENDIAN 1
+#define Q_LITTLE_ENDIAN 4321
+#define Q_BIG_ENDIAN 1234
+#ifdef QT_BIG_ENDIAN
+ #define Q_BYTE_ORDER Q_BIG_ENDIAN
+#else
+ #define Q_BYTE_ORDER Q_LITTLE_ENDIAN
+#endif
+
+#define CMAKE_SIZEOF_VOID_P @CMAKE_SIZEOF_VOID_P@
+
+#cmakedefine QT_NO_STYLE_MAC 1

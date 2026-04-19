@@ -137,6 +137,7 @@
 */
 
 #include "qmovie.h"
+#ifndef QT_NO_MOVIE
 
 #include <qimage.h>
 #include <qimagereader.h>
@@ -628,3 +629,4 @@ void QMovie::stop()
 }
 
 #include "moc_qmovie.cpp"
+#endif

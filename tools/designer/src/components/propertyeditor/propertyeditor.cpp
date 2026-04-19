@@ -528,6 +528,7 @@ void PropertyEditor::createPropertySheet(PropertyCollection *root, QObject *obje
             case QVariant::SizePolicy:
                 p = new SizePolicyProperty(qvariant_cast<QSizePolicy>(value), pname);
                 break;
+        #ifndef QT_NO_DATETIMEEDIT
             case QVariant::DateTime:
                 p = new DateTimeProperty(value.toDateTime(), pname);
                 break;
@@ -537,6 +538,7 @@ void PropertyEditor::createPropertySheet(PropertyCollection *root, QObject *obje
             case QVariant::Time:
                 p = new TimeProperty(value.toTime(), pname);
                 break;
+        #endif
             case QVariant::Cursor:
                 p = new CursorProperty(qvariant_cast<QCursor>(value), pname);
                 break;

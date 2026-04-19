@@ -812,9 +812,9 @@
     decoder->read_width = 1;
 
     /* compute random seed from stack address of parameter */
-    seed = (FT_Fixed)(char*)&seed           ^
-           (FT_Fixed)(char*)&decoder        ^
-           (FT_Fixed)(char*)&charstring_base;
+    seed = (FT_Fixed)(size_t)(char*)&seed           ^
+           (FT_Fixed)(size_t)(char*)&decoder        ^
+           (FT_Fixed)(size_t)(char*)&charstring_base;
     seed = ( seed ^ ( seed >> 10 ) ^ ( seed >> 20 ) ) & 0xFFFFL;
     if ( seed == 0 )
       seed = 0x7384;

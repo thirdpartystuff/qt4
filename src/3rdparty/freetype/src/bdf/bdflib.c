@@ -1006,7 +1006,7 @@
 
     n = _num_bdf_properties + font->nuser_props;
 
-    error = hash_insert( p->name, (void *)n, &(font->proptbl), memory );
+    error = hash_insert( p->name, (void *)(size_t)n, &(font->proptbl), memory );
     if ( error )
       goto Exit;
 
@@ -1031,7 +1031,7 @@
     if ( ( hn = hash_lookup( name, &(font->proptbl) ) ) == 0 )
       return 0;
 
-    propid = (unsigned long)hn->data;
+    propid = (unsigned long)(size_t)hn->data;
     if ( propid >= _num_bdf_properties )
       return font->user_props + ( propid - _num_bdf_properties );
 
@@ -1275,7 +1275,7 @@
     {
       /* The property already exists in the font, so simply replace */
       /* the value of the property with the current value.          */
-      fp = font->props + (unsigned long)hn->data;
+      fp = font->props + (unsigned long)(size_t)hn->data;
 
       switch ( fp->format )
       {
@@ -1345,7 +1345,7 @@
       font->props_size++;
     }
 
-    propid = (unsigned long)hn->data;
+    propid = (unsigned long)(size_t)hn->data;
     if ( propid >= _num_bdf_properties )
       prop = font->user_props + ( propid - _num_bdf_properties );
     else
@@ -1389,7 +1389,7 @@
     if ( ft_memcmp( name, "COMMENT", 7 ) != 0 ) {
       /* Add the property to the font property table. */
       error = hash_insert( fp->name,
-                           (void *)font->props_used,
+                           (void *)(size_t)font->props_used,
                            (hashtable *)font->internal,
                            memory );
       if ( error )
@@ -2036,7 +2036,7 @@
         for ( i = 0, prop = (bdf_property_t*)_bdf_properties;
               i < _num_bdf_properties; i++, prop++ )
         {
-          error = hash_insert( prop->name, (void *)i,
+          error = hash_insert( prop->name, (void *)(size_t)i,
                                &(font->proptbl), memory );
           if ( error )
             goto Exit;
@@ -2428,7 +2428,7 @@
 
     hn = hash_lookup( name, (hashtable *)font->internal );
 
-    return hn ? ( font->props + (unsigned long)hn->data ) : 0;
+    return hn ? ( font->props + (unsigned long)(size_t)hn->data ) : 0;
   }
 
 

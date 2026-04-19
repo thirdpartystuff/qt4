@@ -764,7 +764,7 @@ const QString qt_reg_winclass(Qt::WFlags flags)        // register window class
     }
 
     if (classExists)
-        cname += QString::number((uint)QtWndProc);
+        cname += QString::number((uint)(size_t)QtWndProc);
 
     if (winclassNames()->contains(cname))        // already registered in our list
         return cname;

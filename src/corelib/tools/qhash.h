@@ -65,10 +65,11 @@ Q_CORE_EXPORT uint qHash(const QString &key);
 
 template <class T> inline uint qHash(const T *key)
 {
-    if (sizeof(const T *) > sizeof(uint))
+    #if CMAKE_SIZEOF_VOID_P > 4
         return qHash(reinterpret_cast<quint64>(key));
-    else
+    #else
         return uint(reinterpret_cast<ulong>(key));
+    #endif
 }
 
 struct Q_CORE_EXPORT QHashData
