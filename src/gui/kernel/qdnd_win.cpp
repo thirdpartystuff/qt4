@@ -331,11 +331,14 @@ QOleDropSource::GiveFeedback(DWORD dwEffect)
 //                    QOleDataObject Constructor
 //---------------------------------------------------------------------
 
+int CF_PERFORMEDDROPEFFECT;
+
 QOleDataObject::QOleDataObject(QMimeData *mimeData)
 {
     m_refs = 1;
     data = mimeData;
-    CF_PERFORMEDDROPEFFECT = RegisterClipboardFormat(CFSTR_PERFORMEDDROPEFFECT);
+    if (!CF_PERFORMEDDROPEFFECT)
+        CF_PERFORMEDDROPEFFECT = RegisterClipboardFormat(CFSTR_PERFORMEDDROPEFFECT);
     performedEffect = DROPEFFECT_NONE;
 }
 

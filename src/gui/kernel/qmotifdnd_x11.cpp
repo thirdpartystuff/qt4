@@ -74,6 +74,9 @@ static Time Dnd_selection_time;
 static Atom * src_targets ;
 static ushort num_src_targets ;
 
+extern const QByteArray ba_text_plain;
+extern const QByteArray ba_text_uri_list;
+
 // Motif definitions
 #define DndVersion 1
 #define DndRevision 0
@@ -642,9 +645,9 @@ QByteArray QX11Data::motifdndFormat(int n)
         return 0; // should not happen
 
     if (n == 0)
-        return "text/plain";
+        return ba_text_plain;
     if (n == 1)
-        return "text/uri-list";
+        return ba_text_uri_list;
     n -= 2;
 
     if (n >= num_src_targets)
@@ -658,7 +661,7 @@ QByteArray QX11Data::motifdndFormat(int n)
         return "text/plain;charset=UTF-8";
     if (target == ATOM(TEXT) ||
          target == ATOM(COMPOUND_TEXT))
-        return "text/plain";
+        return ba_text_plain;
 
     return X11->xdndAtomToString(target);
 }

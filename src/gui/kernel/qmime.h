@@ -74,6 +74,7 @@ private:
     friend class QDragManager;
     friend class QDropData;
     friend class QOleDataObject;
+    friend class QNonOleClipboard;
 
     static QWindowsMime *converterToMime(const QString &mimeType, IDataObject *pDataObj);
     static QStringList allMimesForFormats(IDataObject *pDataObj);

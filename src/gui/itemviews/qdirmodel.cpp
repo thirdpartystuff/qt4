@@ -39,6 +39,8 @@
 #  include "qt_windows.h"
 #endif
 
+extern const QString s_text_uri_list;
+
 /*!
   \class QFileIconProvider
 
@@ -669,7 +671,7 @@ void QDirModel::sort(int column, Qt::SortOrder order)
 
 QStringList QDirModel::mimeTypes() const
 {
-    return QStringList(QLatin1String("text/uri-list"));
+    return QStringList(s_text_uri_list);
 }
 
 /*!

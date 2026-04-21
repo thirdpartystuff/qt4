@@ -31,6 +31,10 @@
 #include "qclipboard_p.h"
 #include "qvariant.h"
 
+static const QString s_plain("plain");
+static const QString s_text_prefix("text/");
+extern const QString s_text_plain;
+
 /*!
     \class QClipboard
     \brief The QClipboard class provides access to the window system clipboard.
@@ -207,11 +211,11 @@ QString QClipboard::text(QString &subtype, Mode mode) const
         return QString();
     if (subtype.isEmpty()) {
         QStringList formats = data->formats();
-        if (formats.contains("text/plain"))
-            subtype = "plain";
+        if (formats.contains(s_text_plain))
+            subtype = s_plain;
         else {
             for (int i = 0; i < formats.size(); ++i)
-                if (formats.at(i).startsWith("text/")) {
+                if (formats.at(i).startsWith(s_text_prefix)) {
                     subtype = formats.at(i).mid(5);
                     break;
                 }
@@ -219,9 +223,9 @@ QString QClipboard::text(QString &subtype, Mode mode) const
     }
     if (subtype.isEmpty())
         return QString();
-    if (subtype == "plain")
+    if (subtype == s_plain)
         return data->text();
-    return QString::fromUtf8(data->data("text/" + subtype));
+    return QString::fromUtf8(data->data(s_text_prefix + subtype));
 }
 
 /*!

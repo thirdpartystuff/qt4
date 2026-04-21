@@ -55,6 +55,9 @@
 #define DEBUG if(0) qDebug
 #endif
 
+extern const QByteArray ba_text_plain;
+extern const QString s_text_plain;
+
 // and all this stuff is copied -into- qapp_x11.cpp
 
 static void handle_xdnd_position(QWidget *, const XEvent *, bool);
@@ -278,7 +281,7 @@ QByteArray QX11Data::xdndAtomToString(Atom a)
     if (!a) return 0;
 
     if (a == XA_STRING || a == ATOM(UTF8_STRING)) {
-        return "text/plain"; // some Xdnd clients are dumb
+        return ba_text_plain; // some Xdnd clients are dumb
     }
     char *atom = XGetAtomName(display, a);
     QByteArray result = atom;
@@ -1080,7 +1083,7 @@ void QDragManager::move(const QPoint & globalPos)
             QStringList fmts = QInternalMimeData::formatsHelper(dragPrivate()->data);
             for (int i = 0; i < fmts.size(); ++i) {
                 type.append(X11->xdndStringToAtom(fmts.at(i).toLatin1().data()));
-                if (fmts.at(i) == QLatin1String("text/plain")){
+                if (fmts.at(i) == s_text_plain){
                     type.append(ATOM(UTF8_STRING));
                     type.append(XA_STRING);
                 }
@@ -1231,7 +1234,7 @@ void QX11Data::xdndHandleSelectionRequest(const XSelectionRequestEvent * req)
     evt.xselection.time = req->time;
     QByteArray format;
     if (req->target == XA_STRING || req->target == ATOM(UTF8_STRING))
-        format = "text/plain";
+        format = ba_text_plain;
     else
         format = X11->xdndAtomToString(req->target);
     QDragPrivate* dp = QDragManager::self()->dragPrivate();

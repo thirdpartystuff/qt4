@@ -34,6 +34,88 @@
 #include "qt_windows.h"
 #include "qdnd_p.h"
 
+extern const QString s_text_plain;
+extern const QString s_text_html;
+extern const QString s_text_uri_list;
+extern const QString s_application_x_qt_image;
+extern const QString s_application_x_color;
+
+extern int CF_PERFORMEDDROPEFFECT;
+
+int getCf(const FORMATETC &formatetc);
+STDAPI_(LPENUMFORMATETC) OleStdEnumFmtEtc_Create(ULONG nCount, LPFORMATETC lpEtc);
+
+class QNonOleClipboard : public QOleDataObject
+{
+public:
+    QNonOleClipboard() : QOleDataObject(NULL), m_open(false) {}
+    ~QNonOleClipboard() { if (m_open) CloseClipboard(); }
+
+    bool open() { if (!m_open) { m_open = OpenClipboard(NULL); } return m_open; }
+
+    // IUnknown methods
+    STDMETHOD(QueryInterface)(REFIID riid, void FAR* FAR* ppvObj);
+    STDMETHOD_(ULONG,AddRef)(void);
+    STDMETHOD_(ULONG,Release)(void);
+
+    // IDataObject methods
+    STDMETHOD(QueryGetData)(LPFORMATETC pformatetc);
+    STDMETHOD(GetData)(LPFORMATETC pformatetcIn, LPSTGMEDIUM pmedium);
+    STDMETHOD(EnumFormatEtc)(DWORD dwDirection, LPENUMFORMATETC FAR* ppenumFormatEtc);
+
+private:
+    bool m_open;
+};
+
+STDMETHODIMP QNonOleClipboard::QueryInterface(REFIID iid, void** ppv) { return ResultFromScode(E_NOINTERFACE); }
+STDMETHODIMP_(ULONG) QNonOleClipboard::AddRef(void) { return 1; }
+STDMETHODIMP_(ULONG) QNonOleClipboard::Release(void) { return 1; }
+
+STDMETHODIMP QNonOleClipboard::QueryGetData(LPFORMATETC pformatetc)
+{
+    if (IsClipboardFormatAvailable(getCf(*pformatetc)))
+        return ResultFromScode(S_OK);
+    else
+        return ResultFromScode(DATA_E_FORMATETC);
+}
+
+STDMETHODIMP QNonOleClipboard::GetData(LPFORMATETC pformatetc, LPSTGMEDIUM pmedium)
+{
+    pmedium->tymed = TYMED_HGLOBAL;
+    pmedium->hGlobal = GetClipboardData(getCf(*pformatetc));
+    pmedium->pUnkForRelease = this;
+    return ResultFromScode(S_OK);
+}
+
+STDMETHODIMP QNonOleClipboard::EnumFormatEtc(DWORD dwDirection, LPENUMFORMATETC FAR* ppenumFormatEtc)
+{
+    SCODE sc = S_OK;
+
+    if (dwDirection == DATADIR_GET) {
+        QVector<FORMATETC> fmtetcs = QWindowsMime::allFormatsForMime(NULL);
+        for (int i = 0; i < fmtetcs.size(); ) {
+            if (IsClipboardFormatAvailable(getCf(fmtetcs.at(i))))
+                ++i;
+            else
+                fmtetcs.remove(i);
+        }
+        *ppenumFormatEtc = OleStdEnumFmtEtc_Create(fmtetcs.size(), fmtetcs.data());
+        if (*ppenumFormatEtc == NULL)
+            sc = E_OUTOFMEMORY;
+    } else {
+        FORMATETC formatetc;
+        formatetc.cfFormat = CF_PERFORMEDDROPEFFECT;
+        formatetc.dwAspect = DVASPECT_CONTENT;
+        formatetc.lindex = -1;
+        formatetc.ptd = NULL;
+        formatetc.tymed = TYMED_HGLOBAL;
+        *ppenumFormatEtc = OleStdEnumFmtEtc_Create(1, &formatetc);
+        if (*ppenumFormatEtc == NULL)
+            sc = E_OUTOFMEMORY;
+    }
+
+    return ResultFromScode(sc);
+}
 
 class QClipboardWatcher : public QInternalMimeData {
 public:
@@ -50,10 +132,14 @@ public:
 
 bool QClipboardWatcher::hasFormat_sys(const QString &mime) const
 {
+    QNonOleClipboard nonOleClipboard;
     IDataObject * pDataObj = 0;
 
-    if (!pfnOleGetClipboard || (pfnOleGetClipboard(&pDataObj) != S_OK && !pDataObj)) // Sanity
-        return false;
+    if (!pfnOleGetClipboard || (pfnOleGetClipboard(&pDataObj) != S_OK && !pDataObj)) { // Sanity
+        if (!nonOleClipboard.open())
+            return false;
+        pDataObj = &nonOleClipboard;
+    }
 
     bool has = QWindowsMime::converterToMime(mime, pDataObj) != 0;
 
@@ -65,10 +151,14 @@ bool QClipboardWatcher::hasFormat_sys(const QString &mime) const
 QStringList QClipboardWatcher::formats_sys() const
 {
     QStringList fmts;
+    QNonOleClipboard nonOleClipboard;
     IDataObject * pDataObj = 0;
 
-    if (!pfnOleGetClipboard || (pfnOleGetClipboard(&pDataObj) != S_OK && !pDataObj)) // Sanity
-        return QStringList();
+    if (!pfnOleGetClipboard || (pfnOleGetClipboard(&pDataObj) != S_OK && !pDataObj)) { // Sanity
+        if (!nonOleClipboard.open())
+            return QStringList();
+        pDataObj = &nonOleClipboard;
+    }
 
     fmts = QWindowsMime::allMimesForFormats(pDataObj);
 
@@ -80,10 +170,14 @@ QStringList QClipboardWatcher::formats_sys() const
 QVariant QClipboardWatcher::retrieveData_sys(const QString &mimeType, QVariant::Type type) const
 {
     QVariant result;
+    QNonOleClipboard nonOleClipboard;
     IDataObject * pDataObj = 0;
 
-    if (!pfnOleGetClipboard || (pfnOleGetClipboard(&pDataObj) != S_OK && !pDataObj)) // Sanity
-        return result;
+    if (!pfnOleGetClipboard || (pfnOleGetClipboard(&pDataObj) != S_OK && !pDataObj)) { // Sanity
+        if (!nonOleClipboard.open())
+            return result;
+        pDataObj = &nonOleClipboard;
+    }
 
     QWindowsMime *converter = QWindowsMime::converterToMime(mimeType, pDataObj);
 
@@ -161,9 +255,38 @@ void QClipboard::setMimeData(QMimeData *src, Mode mode)
 
     d->releaseIData();
 
+    if (!pfnOleSetClipboard) {
+        if (OpenClipboard(NULL)) {
+            EmptyClipboard();
+            if (src->hasText()) {
+                // FIXME: CF_UNICODETEXT !
+                QByteArray data = src->text().toLocal8Bit();
+                size_t dataSize = size_t(data.size()) + 1;
+                HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, dataSize + 1);
+                if (hMem) {
+                    char* ptr = (char*)GlobalLock(hMem);
+                    memcpy(ptr, data.data(), dataSize);
+                    ptr[dataSize] = 0;
+                    GlobalUnlock(hMem);
+                    SetClipboardData(CF_TEXT, hMem);
+                }
+            }
+            /* FIXME
+            if (src->hasImage()) {
+                QImage image = qvariant_cast<QImage>(src->imageData());
+                HBITMAP hBitmap = QPixmap::fromImage(image).toWinHBITMAP(QPixmap::PremultipliedAlpha);
+                if (hBitmap)
+                    SetClipboardData(CF_BITMAP, hBitmap);
+            }
+            */
+            CloseClipboard();
+        }
+        return;
+    }
+
     d->iData = new QOleDataObject(src);
 
-    if (!pfnOleSetClipboard || pfnOleSetClipboard(d->iData) != S_OK) {
+    if (pfnOleSetClipboard(d->iData) != S_OK) {
         d->releaseIData();
         qErrnoWarning("QClipboard::setMimeData: Failed to set data on clipboard");
         return;
@@ -179,7 +302,15 @@ void QClipboard::clear(Mode mode)
 
     d->releaseIData();
 
-    if (!pfnOleSetClipboard || pfnOleSetClipboard(0) != S_OK) {
+    if (!pfnOleSetClipboard) {
+        if (OpenClipboard(NULL)) {
+            EmptyClipboard();
+            CloseClipboard();
+        }
+        return;
+    }
+
+    if (pfnOleSetClipboard(0) != S_OK) {
         qErrnoWarning("QClipboard::clear: Failed to clear data on clipboard");
         return;
     }
@@ -255,7 +386,10 @@ bool QClipboard::ownsClipboard() const
 {
     QClipboardData *d = clipboardData();
 
-    return d->iData && pfnOleIsCurrentClipboard && pfnOleIsCurrentClipboard(d->iData) == S_OK;
+    if (!pfnOleIsCurrentClipboard)
+        return GetClipboardOwner() == d->clipBoardViewer->winId();
+
+    return d->iData && pfnOleIsCurrentClipboard(d->iData) == S_OK;
 }
 
 bool QClipboard::supportsSelection() const

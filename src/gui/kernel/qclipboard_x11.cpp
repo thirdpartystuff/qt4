@@ -60,6 +60,10 @@
 #include "qvariant.h"
 #include "qdnd_p.h"
 
+static const QString s_image_ppm("image/ppm");
+static const QString s_image_pbm("image/pbm");
+extern const QString s_text_plain;
+
 /*****************************************************************************
   Internal QClipboard functions for X11.
  *****************************************************************************/
@@ -657,9 +661,9 @@ static Atom send_targets_selection(QClipboardData *d, Window window, Atom proper
 {
     QStringList formats = QInternalMimeData::formatsHelper(d->source());
     int atoms = formats.size();
-    if (formats.contains("image/ppm")) atoms++;
-    if (formats.contains("image/pbm")) atoms++;
-    if (formats.contains("text/plain")) atoms+=4;
+    if (formats.contains(s_image_ppm)) atoms++;
+    if (formats.contains(s_image_pbm)) atoms++;
+    if (formats.contains(s_text_plain)) atoms+=4;
 
     VDEBUG("QClipboard: send_targets_selection(): data provides %d types, mapped to %d provided types", formats.size(), atoms);
 
@@ -674,11 +678,11 @@ static Atom send_targets_selection(QClipboardData *d, Window window, Atom proper
         atarget[n] = X11->xdndStringToAtom(formats.at(n).toLatin1().data());
     }
 
-    if (formats.contains("image/ppm"))
+    if (formats.contains(s_image_ppm))
         atarget[n++] = XA_PIXMAP;
-    if (formats.contains("image/pbm"))
+    if (formats.contains(s_image_pbm))
         atarget[n++] = XA_BITMAP;
-    if (formats.contains("text/plain")) {
+    if (formats.contains(s_text_plain)) {
         atarget[n++] = ATOM(UTF8_STRING);
         atarget[n++] = ATOM(TEXT);
         atarget[n++] = ATOM(COMPOUND_TEXT);
@@ -1186,12 +1190,12 @@ QStringList QClipboardWatcher::formats_sys() const
 
                 VDEBUG("    format: %s", X11->xdndAtomToString(targets[i]).data());
                 if (targets[i] == XA_PIXMAP)
-                    formatList.append("image/ppm");
+                    formatList.append(s_image_ppm);
                 else if (targets[i] == XA_STRING
                          || targets[i] == ATOM(UTF8_STRING)
                          || targets[i] == ATOM(TEXT)
                          || targets[i] == ATOM(COMPOUND_TEXT))
-                    formatList.append("text/plain");
+                    formatList.append(s_text_plain);
                 else
                     formatList.append(X11->xdndAtomToString(targets[i]));
                 VDEBUG("    data:\n%s\n", getDataInFormat(targets[i]).data());
@@ -1220,7 +1224,7 @@ QVariant QClipboardWatcher::retrieveData_sys(const QString &fmt, QVariant::Type 
 
     Atom fmtatom = 0;
 
-    if (fmt == QLatin1String("text/plain")) {
+    if (fmt == QLatin1String(s_text_plain)) {
         Atom *targets = (Atom *) format_atoms.data();
         int size = format_atoms.size() / sizeof(Atom);
 
@@ -1260,7 +1264,7 @@ QVariant QClipboardWatcher::retrieveData_sys(const QString &fmt, QVariant::Type 
             return result;
         return result.toUtf8();
     }
-    if (fmt == QLatin1String("image/ppm")) {
+    if (fmt == s_image_ppm) {
         fmtatom = XA_PIXMAP;
         QByteArray pmd = getDataInFormat(fmtatom);
         if (pmd.size() == sizeof(Pixmap)) {

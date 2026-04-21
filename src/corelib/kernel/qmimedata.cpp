@@ -27,6 +27,15 @@
 #include "qurl.h"
 #include "qstringlist.h"
 
+const QByteArray ba_text_plain("text/plain");
+const QByteArray ba_text_uri_list("text/uri-list");
+
+const QString s_text_plain("text/plain");
+const QString s_text_html("text/html");
+const QString s_text_uri_list("text/uri-list");
+const QString s_application_x_qt_image("application/x-qt-image");
+const QString s_application_x_color("application/x-color");
+
 struct MimeData
 {
     QString format;
@@ -220,7 +229,7 @@ QMimeData::~QMimeData()
 QList<QUrl> QMimeData::urls() const
 {
     Q_D(const QMimeData);
-    QVariant data = d->retrieveTypedData("text/uri-list", QVariant::List);
+    QVariant data = d->retrieveTypedData(s_text_uri_list, QVariant::List);
     QList<QUrl> urls;
     if (data.type() == QVariant::Url)
         urls.append(data.toUrl());
@@ -244,7 +253,7 @@ void QMimeData::setUrls(const QList<QUrl> &urls)
     for (int i = 0; i < urls.size(); ++i)
         list.append(urls.at(i));
 
-    d->setData("text/uri-list", list);
+    d->setData(s_text_uri_list, list);
 }
 
 /*!
@@ -252,7 +261,7 @@ void QMimeData::setUrls(const QList<QUrl> &urls)
 */
 bool QMimeData::hasUrls() const
 {
-    return hasFormat("text/uri-list");
+    return hasFormat(s_text_uri_list);
 }
 
 
@@ -262,7 +271,7 @@ bool QMimeData::hasUrls() const
 QString QMimeData::text() const
 {
     Q_D(const QMimeData);
-    QVariant data = d->retrieveTypedData("text/plain", QVariant::String);
+    QVariant data = d->retrieveTypedData(s_text_plain, QVariant::String);
     return data.toString();
 }
 
@@ -272,7 +281,7 @@ QString QMimeData::text() const
 void QMimeData::setText(const QString &text)
 {
     Q_D(QMimeData);
-    d->setData("text/plain", text);
+    d->setData(s_text_plain, text);
 }
 
 /*!
@@ -280,7 +289,7 @@ void QMimeData::setText(const QString &text)
 */
 bool QMimeData::hasText() const
 {
-    return hasFormat("text/plain");
+    return hasFormat(s_text_plain);
 }
 
 /*!
@@ -290,7 +299,7 @@ bool QMimeData::hasText() const
 QString QMimeData::html() const
 {
     Q_D(const QMimeData);
-    QVariant data = d->retrieveTypedData("text/html", QVariant::String);
+    QVariant data = d->retrieveTypedData(s_text_html, QVariant::String);
     return data.toString();
 }
 
@@ -300,7 +309,7 @@ QString QMimeData::html() const
 void QMimeData::setHtml(const QString &html)
 {
     Q_D(QMimeData);
-    d->setData("text/html", html);
+    d->setData(s_text_html, html);
 }
 
 /*!
@@ -308,7 +317,7 @@ void QMimeData::setHtml(const QString &html)
 */
 bool QMimeData::hasHtml() const
 {
-    return hasFormat("text/html");
+    return hasFormat(s_text_html);
 }
 
 /*!
@@ -318,7 +327,7 @@ bool QMimeData::hasHtml() const
 QVariant QMimeData::imageData() const
 {
     Q_D(const QMimeData);
-    return d->retrieveTypedData("application/x-qt-image", QVariant::Image);
+    return d->retrieveTypedData(s_application_x_qt_image, QVariant::Image);
 }
 
 /*!
@@ -327,7 +336,7 @@ QVariant QMimeData::imageData() const
 void QMimeData::setImageData(const QVariant &image)
 {
     Q_D(QMimeData);
-    d->setData("application/x-qt-image", image);
+    d->setData(s_application_x_qt_image, image);
 }
 
 /*!
@@ -335,7 +344,7 @@ void QMimeData::setImageData(const QVariant &image)
 */
 bool QMimeData::hasImage() const
 {
-    return hasFormat("application/x-qt-image");
+    return hasFormat(s_application_x_qt_image);
 }
 
 /*!
@@ -345,7 +354,7 @@ bool QMimeData::hasImage() const
 QVariant QMimeData::colorData() const
 {
     Q_D(const QMimeData);
-    return d->retrieveTypedData("application/x-color", QVariant::Color);
+    return d->retrieveTypedData(s_application_x_color, QVariant::Color);
 }
 
 /*!
@@ -354,7 +363,7 @@ QVariant QMimeData::colorData() const
 void QMimeData::setColorData(const QVariant &color)
 {
     Q_D(QMimeData);
-    d->setData("application/x-color", color);
+    d->setData(s_application_x_color, color);
 }
 
 
@@ -363,7 +372,7 @@ void QMimeData::setColorData(const QVariant &color)
 */
 bool QMimeData::hasColor() const
 {
-    return hasFormat("application/x-color");
+    return hasFormat(s_application_x_color);
 }
 
 /*!
