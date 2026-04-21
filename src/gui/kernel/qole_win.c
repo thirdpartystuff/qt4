@@ -1,5 +1,5 @@
 #define STRICT  1
-#include <windows.h>
+#include <qt_windows.h>
 #include <ole2.h>
 
 STDAPI_(LPVOID) OleStdMalloc(ULONG ulSize);
@@ -55,16 +55,16 @@ STDAPI_(LPENUMFORMATETC)
 //
 //----------------------------------------------------------------------------
 {
-#ifdef Q_OS_TEMP
-  return NULL;
-#else
   LPMALLOC lpMalloc=NULL;
   DWORD dwSize;
   ULONG i;
   HRESULT hRes;
   LPOLESTDENUMFMTETC lpEF;
 
-  hRes = CoGetMalloc(MEMCTX_TASK, &lpMalloc);
+  if (!pfnCoGetMalloc)
+    return NULL;
+
+  hRes = pfnCoGetMalloc(MEMCTX_TASK, &lpMalloc);
   if (hRes != NOERROR) {
     return NULL;
   }
@@ -103,7 +103,6 @@ errReturn:
     lpMalloc->lpVtbl->Release(lpMalloc);
 
   return NULL;
-#endif
 } /* OleStdEnumFmtEtc_Create()
    */
 
@@ -114,15 +113,12 @@ VOID
 //
 //----------------------------------------------------------------------------
 {
-#ifdef Q_OS_TEMP
-	return;
-#else
     LPMALLOC lpMalloc=NULL;
     ULONG i;
 
     if (lpEF != NULL) {
 
-        if (CoGetMalloc(MEMCTX_TASK, &lpMalloc) == NOERROR) {
+        if (pfnCoGetMalloc && pfnCoGetMalloc(MEMCTX_TASK, &lpMalloc) == NOERROR) {
 
             /* OLE2NOTE: we MUST free any memory that was allocated for
             **    TARGETDEVICES contained within the FORMATETC elements.
@@ -139,7 +135,6 @@ VOID
             lpMalloc->lpVtbl->Release(lpMalloc);
         }
     }
-#endif
 } /* OleStdEnumFmtEtc_Destroy()
    */
 
@@ -389,15 +384,12 @@ STDAPI_(BOOL) OleStdCopyFormatEtc(LPFORMATETC petcDest, LPFORMATETC petcSrc)
 */
 STDAPI_(void) OleStdFree(LPVOID pmem)
 {
-#ifdef Q_OS_TEMP
-	return;
-#else
     LPMALLOC pmalloc;
 
     if (pmem == NULL)
         return;
 
-    if (CoGetMalloc(MEMCTX_TASK, &pmalloc) != NOERROR) {
+    if (!pfnCoGetMalloc || pfnCoGetMalloc(MEMCTX_TASK, &pmalloc) != NOERROR) {
         return;
     }
 
@@ -406,7 +398,6 @@ STDAPI_(void) OleStdFree(LPVOID pmem)
     if (pmalloc != NULL) {
         pmalloc->lpVtbl->Release(pmalloc);
     }
-#endif
 }
 
 /* OleStdMalloc
@@ -415,13 +406,10 @@ STDAPI_(void) OleStdFree(LPVOID pmem)
 */
 STDAPI_(LPVOID) OleStdMalloc(ULONG ulSize)
 {
-#ifdef Q_OS_TEMP
-	return NULL;
-#else
     LPVOID pout;
     LPMALLOC pmalloc;
 
-    if (CoGetMalloc(MEMCTX_TASK, &pmalloc) != NOERROR) {
+    if (!pfnCoGetMalloc || pfnCoGetMalloc(MEMCTX_TASK, &pmalloc) != NOERROR) {
         return NULL;
     }
 
@@ -432,7 +420,6 @@ STDAPI_(LPVOID) OleStdMalloc(ULONG ulSize)
     }
 
     return pout;
-#endif
 }
 
 

@@ -39,12 +39,20 @@
 #include <qt_windows.h>
 PFNOLEINITIALIZE pfnOleInitialize;
 PFNOLEUNINITIALIZE pfnOleUninitialize;
+PFNOLEGETCLIPBOARD pfnOleGetClipboard;
+PFNOLESETCLIPBOARD pfnOleSetClipboard;
+PFNOLEISCURRENTCLIPBOARD pfnOleIsCurrentClipboard;
 PFNOLEFLUSHCLIPBOARD pfnOleFlushClipboard;
 PFNCOINITIALIZE pfnCoInitialize;
 PFNCOUNINITIALIZE pfnCoUninitialize;
+PFNCOGETMALLOC pfnCoGetMalloc;
 PFNCOTASKMEMFREE pfnCoTaskMemFree;
 PFNCOCREATEINSTANCE pfnCoCreateInstance;
+PFNCOLOCKOBJECTEXTERNAL pfnCoLockObjectExternal;
 PFNRELEASESTGMEDIUM pfnReleaseStgMedium;
+PFNREGISTERDRAGDROP pfnRegisterDragDrop;
+PFNDODRAGDROP pfnDoDragDrop;
+PFNREVOKEDRAGDROP pfnRevokeDragDrop;
 #endif
 
 /*!

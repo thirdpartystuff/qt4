@@ -816,12 +816,8 @@ Qt::DropAction QDragManager::drag(QDrag *o)
     QOleDataObject *obj = new QOleDataObject(o->mimeData());
     DWORD allowedEffects = translateToWinDragEffects(dragPrivate()->possible_actions);
 
-#ifdef Q_OS_TEMP
-    HRESULT r = 0;
     resultEffect = 0;
-#else
-    HRESULT r = DoDragDrop(obj, src, allowedEffects, &resultEffect);
-#endif
+    HRESULT r = (pfnDoDragDrop ? pfnDoDragDrop(obj, src, allowedEffects, &resultEffect) : E_NOTIMPL);
 
     Qt::DropAction ret = Qt::IgnoreAction;
     if (r == DRAGDROP_S_DROP) {
@@ -879,19 +875,15 @@ void qt_olednd_unregister(QWidget* widget, QOleDropTarget *dst)
 {
     dst->releaseQt();
     dst->Release();
-#ifndef Q_OS_TEMP
-    CoLockObjectExternal(dst, false, true);
-    RevokeDragDrop(widget->winId());
-#endif
+    if (pfnCoLockObjectExternal) pfnCoLockObjectExternal(dst, false, true);
+    if (pfnRevokeDragDrop) pfnRevokeDragDrop(widget->winId());
 }
 
 QOleDropTarget* qt_olednd_register(QWidget* widget)
 {
     QOleDropTarget* dst = new QOleDropTarget(widget);
-#ifndef Q_OS_TEMP
-    RegisterDragDrop(widget->winId(), dst);
-    CoLockObjectExternal(dst, true, true);
-#endif
+    if (pfnRegisterDragDrop) pfnRegisterDragDrop(widget->winId(), dst);
+    if (pfnCoLockObjectExternal) pfnCoLockObjectExternal(dst, true, true);
     return dst;
 }
 

@@ -201,12 +201,20 @@ void qWinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdParam,
     if (hOle32) {
         pfnOleInitialize = (PFNOLEINITIALIZE)GetProcAddress(hOle32, "OleInitialize");
         pfnOleUninitialize = (PFNOLEUNINITIALIZE)GetProcAddress(hOle32, "OleUninitialize");
+        pfnOleGetClipboard = (PFNOLEGETCLIPBOARD)GetProcAddress(hOle32, "OleGetClipboard");
+        pfnOleSetClipboard = (PFNOLESETCLIPBOARD)GetProcAddress(hOle32, "OleSetClipboard");
+        pfnOleIsCurrentClipboard = (PFNOLEISCURRENTCLIPBOARD)GetProcAddress(hOle32, "OleIsCurrentClipboard");
         pfnOleFlushClipboard = (PFNOLEFLUSHCLIPBOARD)GetProcAddress(hOle32, "OleFlushClipboard");
         pfnCoInitialize = (PFNCOINITIALIZE)GetProcAddress(hOle32, "CoInitialize");
         pfnCoUninitialize = (PFNCOUNINITIALIZE)GetProcAddress(hOle32, "CoUninitialize");
+        pfnCoGetMalloc = (PFNCOGETMALLOC)GetProcAddress(hOle32, "CoGetMalloc");
         pfnCoTaskMemFree = (PFNCOTASKMEMFREE)GetProcAddress(hOle32, "CoTaskMemFree");
         pfnCoCreateInstance = (PFNCOCREATEINSTANCE)GetProcAddress(hOle32, "CoCreateInstance");
+        pfnCoLockObjectExternal = (PFNCOLOCKOBJECTEXTERNAL)GetProcAddress(hOle32, "CoLockObjectExternal");
         pfnReleaseStgMedium = (PFNRELEASESTGMEDIUM)GetProcAddress(hOle32, "ReleaseStgMedium");
+        pfnRegisterDragDrop = (PFNREGISTERDRAGDROP)GetProcAddress(hOle32, "RegisterDragDrop");
+        pfnDoDragDrop = (PFNDODRAGDROP)GetProcAddress(hOle32, "DoDragDrop");
+        pfnRevokeDragDrop = (PFNREVOKEDRAGDROP)GetProcAddress(hOle32, "RevokeDragDrop");
     }
 }
 

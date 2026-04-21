@@ -52,7 +52,7 @@ bool QClipboardWatcher::hasFormat_sys(const QString &mime) const
 {
     IDataObject * pDataObj = 0;
 
-    if (OleGetClipboard(&pDataObj) != S_OK && !pDataObj) // Sanity
+    if (!pfnOleGetClipboard || (pfnOleGetClipboard(&pDataObj) != S_OK && !pDataObj)) // Sanity
         return false;
 
     bool has = QWindowsMime::converterToMime(mime, pDataObj) != 0;
@@ -67,7 +67,7 @@ QStringList QClipboardWatcher::formats_sys() const
     QStringList fmts;
     IDataObject * pDataObj = 0;
 
-    if (OleGetClipboard(&pDataObj) != S_OK && !pDataObj) // Sanity
+    if (!pfnOleGetClipboard || (pfnOleGetClipboard(&pDataObj) != S_OK && !pDataObj)) // Sanity
         return QStringList();
 
     fmts = QWindowsMime::allMimesForFormats(pDataObj);
@@ -82,7 +82,7 @@ QVariant QClipboardWatcher::retrieveData_sys(const QString &mimeType, QVariant::
     QVariant result;
     IDataObject * pDataObj = 0;
 
-    if (OleGetClipboard(&pDataObj) != S_OK && !pDataObj) // Sanity
+    if (!pfnOleGetClipboard || (pfnOleGetClipboard(&pDataObj) != S_OK && !pDataObj)) // Sanity
         return result;
 
     QWindowsMime *converter = QWindowsMime::converterToMime(mimeType, pDataObj);
@@ -163,7 +163,7 @@ void QClipboard::setMimeData(QMimeData *src, Mode mode)
 
     d->iData = new QOleDataObject(src);
 
-    if (OleSetClipboard(d->iData) != S_OK) {
+    if (!pfnOleSetClipboard || pfnOleSetClipboard(d->iData) != S_OK) {
         d->releaseIData();
         qErrnoWarning("QClipboard::setMimeData: Failed to set data on clipboard");
         return;
@@ -179,7 +179,7 @@ void QClipboard::clear(Mode mode)
 
     d->releaseIData();
 
-    if (OleSetClipboard(0) != S_OK) {
+    if (!pfnOleSetClipboard || pfnOleSetClipboard(0) != S_OK) {
         qErrnoWarning("QClipboard::clear: Failed to clear data on clipboard");
         return;
     }
@@ -255,7 +255,7 @@ bool QClipboard::ownsClipboard() const
 {
     QClipboardData *d = clipboardData();
 
-    return d->iData && OleIsCurrentClipboard(d->iData) == S_OK;
+    return d->iData && pfnOleIsCurrentClipboard && pfnOleIsCurrentClipboard(d->iData) == S_OK;
 }
 
 bool QClipboard::supportsSelection() const
