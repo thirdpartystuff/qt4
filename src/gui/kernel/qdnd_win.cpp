@@ -457,8 +457,8 @@ QOleDataObject::SetData(LPFORMATETC pFormatetc, STGMEDIUM *pMedium, BOOL fReleas
         DWORD * val = (DWORD*)GlobalLock(pMedium->hGlobal);
         performedEffect = *val;
         GlobalUnlock(pMedium->hGlobal);
-        if (fRelease)
-            ReleaseStgMedium(pMedium);
+        if (fRelease && pfnReleaseStgMedium)
+            pfnReleaseStgMedium(pMedium);
         return ResultFromScode(S_OK);
     }
     return ResultFromScode(E_NOTIMPL);

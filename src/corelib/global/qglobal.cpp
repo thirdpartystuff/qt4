@@ -42,7 +42,9 @@ PFNOLEUNINITIALIZE pfnOleUninitialize;
 PFNOLEFLUSHCLIPBOARD pfnOleFlushClipboard;
 PFNCOINITIALIZE pfnCoInitialize;
 PFNCOUNINITIALIZE pfnCoUninitialize;
+PFNCOTASKMEMFREE pfnCoTaskMemFree;
 PFNCOCREATEINSTANCE pfnCoCreateInstance;
+PFNRELEASESTGMEDIUM pfnReleaseStgMedium;
 #endif
 
 /*!

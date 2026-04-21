@@ -204,7 +204,9 @@ void qWinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdParam,
         pfnOleFlushClipboard = (PFNOLEFLUSHCLIPBOARD)GetProcAddress(hOle32, "OleFlushClipboard");
         pfnCoInitialize = (PFNCOINITIALIZE)GetProcAddress(hOle32, "CoInitialize");
         pfnCoUninitialize = (PFNCOUNINITIALIZE)GetProcAddress(hOle32, "CoUninitialize");
+        pfnCoTaskMemFree = (PFNCOTASKMEMFREE)GetProcAddress(hOle32, "CoTaskMemFree");
         pfnCoCreateInstance = (PFNCOCREATEINSTANCE)GetProcAddress(hOle32, "CoCreateInstance");
+        pfnReleaseStgMedium = (PFNRELEASESTGMEDIUM)GetProcAddress(hOle32, "ReleaseStgMedium");
     }
 }
 

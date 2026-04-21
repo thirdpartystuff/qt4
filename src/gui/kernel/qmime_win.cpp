@@ -92,7 +92,7 @@ static QByteArray getData(int cf, IDataObject *pDataObj)
         data = QByteArray::fromRawData((char*)val, GlobalSize(s.hGlobal));
         data.detach();
         GlobalUnlock(s.hGlobal);
-        ReleaseStgMedium(&s);
+        if (pfnReleaseStgMedium) pfnReleaseStgMedium(&s);
     }
     return data;
 }
@@ -313,8 +313,8 @@ QStringList QWindowsMime::allMimesForFormats(IDataObject *pDataObj)
                 }
             }
             // as documented in MSDN to avoid possible memleak
-            if (fmtetc.ptd)
-                CoTaskMemFree(fmtetc.ptd);
+            if (fmtetc.ptd && pfnCoTaskMemFree)
+                pfnCoTaskMemFree(fmtetc.ptd);
         }
         fmtenum->Release();
     }

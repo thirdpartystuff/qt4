@@ -99,12 +99,16 @@ extern PFNOLEFLUSHCLIPBOARD pfnOleFlushClipboard;
 
 typedef HRESULT (WINAPI* PFNCOINITIALIZE)(LPVOID pvReserved);
 typedef void (WINAPI* PFNCOUNINITIALIZE)(void);
+typedef void (WINAPI* PFNCOTASKMEMFREE)(LPVOID pv);
 typedef HRESULT (WINAPI* PFNCOCREATEINSTANCE)
     (REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID riid, LPVOID* ppv);
+typedef void (WINAPI* PFNRELEASESTGMEDIUM)(LPSTGMEDIUM unnamedParam1);
 
 extern PFNCOINITIALIZE pfnCoInitialize;
 extern PFNCOUNINITIALIZE pfnCoUninitialize;
+extern PFNCOTASKMEMFREE pfnCoTaskMemFree;
 extern PFNCOCREATEINSTANCE pfnCoCreateInstance;
+extern PFNRELEASESTGMEDIUM pfnReleaseStgMedium;
 
 #ifdef __cplusplus
 }
