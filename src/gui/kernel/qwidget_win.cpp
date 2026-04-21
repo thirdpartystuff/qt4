@@ -788,7 +788,7 @@ void QWidget::grabMouse()
         if (mouseGrb)
             mouseGrb->releaseMouse();
 #ifndef Q_OS_TEMP
-        journalRec = SetWindowsHookExA(WH_JOURNALRECORD, (HOOKPROC)qJournalRecordProc, GetModuleHandleA(0), 0);
+        journalRec = SetWindowsHookExA(WH_JOURNALRECORD, (HOOKPROC)qJournalRecordProc, GetModuleHandle(0), 0);
 #endif
         SetCapture(winId());
         mouseGrb = this;
@@ -801,7 +801,7 @@ void QWidget::grabMouse(const QCursor &cursor)
         if (mouseGrb)
             mouseGrb->releaseMouse();
 #ifndef Q_OS_TEMP
-        journalRec = SetWindowsHookExA(WH_JOURNALRECORD, (HOOKPROC)qJournalRecordProc, GetModuleHandleA(0), 0);
+        journalRec = SetWindowsHookExA(WH_JOURNALRECORD, (HOOKPROC)qJournalRecordProc, GetModuleHandle(0), 0);
 #endif
         SetCapture(winId());
         mouseGrbCur = new QCursor(cursor);

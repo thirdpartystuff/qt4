@@ -155,7 +155,7 @@ void QDesktopWidgetPrivate::init(QDesktopWidget *that)
 #else
     screenCount = 1;
 
-    if ((user32hnd = GetModuleHandleA("user32"))) {
+    if ((user32hnd = GetModuleHandle(TEXT("user32")))) {
         // CE >= 4.0 case
         enumDisplayMonitors = (EnumFunc)GetProcAddress(user32hnd, "EnumDisplayMonitors");
         getMonitorInfo = (InfoFunc)GetProcAddress(user32hnd, "GetMonitorInfoW");
