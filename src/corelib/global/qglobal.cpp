@@ -1365,6 +1365,9 @@ const QSysInfo::MacVersion QSysInfo::MacintoshVersion = macVersion();
 
 #include "qt_windows.h"
 
+typedef BOOL (WINAPI *PFNGETVERSIONEXA)(LPOSVERSIONINFOA lpVersionInformation);
+typedef BOOL (WINAPI *PFNGETVERSIONEXW)(LPOSVERSIONINFOW lpVersionInformation);
+
 static QSysInfo::WinVersion winVersion()
 {
 #ifndef VER_PLATFORM_WIN32s
@@ -1381,18 +1384,31 @@ static QSysInfo::WinVersion winVersion()
 #endif
 
     static QSysInfo::WinVersion winver = QSysInfo::WV_NT;
-#ifndef Q_OS_TEMP
-    OSVERSIONINFOA osver;
-    osver.dwOSVersionInfoSize = sizeof(osver);
-    GetVersionExA(&osver);
-#else
+
+    HINSTANCE hKernel32 = GetModuleHandle(TEXT("kernel32"));
+    PFNGETVERSIONEXW pfnGetVersionExW = (PFNGETVERSIONEXW)GetProcAddress(hKernel32, "GetVersionExW");
+    PFNGETVERSIONEXA pfnGetVersionExA = (PFNGETVERSIONEXA)GetProcAddress(hKernel32, "GetVersionExA");
+
     DWORD qt_cever = 0;
+    OSVERSIONINFOA osverA;
     OSVERSIONINFOW osver;
+    osverA.dwOSVersionInfoSize = sizeof(osverA);
     osver.dwOSVersionInfoSize = sizeof(osver);
-    GetVersionEx(&osver);
+    if (pfnGetVersionExA && pfnGetVersionExA(&osverA))
+        memcpy(&osver, &osverA, qMin(sizeof(osver), sizeof(osverA)));
+    else if (!pfnGetVersionExW || !pfnGetVersionExW(&osver)) {
+        DWORD dwVersion = GetVersion();
+        osver.dwMajorVersion = (DWORD)(LOBYTE(LOWORD(dwVersion)));
+        osver.dwMinorVersion = (DWORD)(HIBYTE(LOWORD(dwVersion)));
+        if ((dwVersion & 0x80000000) == 0)
+            osver.dwPlatformId = VER_PLATFORM_WIN32_NT;
+        else if (osver.dwMajorVersion >= 4)
+            osver.dwPlatformId = VER_PLATFORM_WIN32_WINDOWS;
+        else
+            osver.dwPlatformId = VER_PLATFORM_WIN32s;
+    }
     qt_cever = osver.dwMajorVersion * 100;
     qt_cever += osver.dwMinorVersion * 10;
-#endif
     switch (osver.dwPlatformId) {
     case VER_PLATFORM_WIN32s:
         winver = QSysInfo::WV_32s;
@@ -1406,17 +1422,21 @@ static QSysInfo::WinVersion winVersion()
         else
             winver = QSysInfo::WV_95;
         break;
-#ifdef Q_OS_TEMP
     case VER_PLATFORM_WIN32_CE:
-#ifdef Q_OS_TEMP
         if (qt_cever >= 400)
             winver = QSysInfo::WV_CENET;
         else
-#endif
             winver = QSysInfo::WV_CE;
         break;
-#endif
     default: // VER_PLATFORM_WIN32_NT
+        if (osver.dwMajorVersion >= 6) {
+            if (osver.dwMinorVersion >= 2 || osver.dwMajorVersion > 6)
+                winver = QSysInfo::WV_WINDOWS8;
+            else if (osver.dwMinorVersion == 1)
+                winver = QSysInfo::WV_WINDOWS7;
+            else
+                winver = QSysInfo::WV_VISTA;
+        } else
         if (osver.dwMajorVersion < 5) {
             winver = QSysInfo::WV_NT;
         } else if (osver.dwMinorVersion == 0) {
