@@ -85,4 +85,29 @@
 #define WM_MOUSEWHEEL        0x020A
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef HRESULT (WINAPI* PFNOLEINITIALIZE)(LPVOID);
+typedef void (WINAPI* PFNOLEUNINITIALIZE)(void);
+typedef HRESULT (WINAPI* PFNOLEFLUSHCLIPBOARD)(void);
+
+extern PFNOLEINITIALIZE pfnOleInitialize;
+extern PFNOLEUNINITIALIZE pfnOleUninitialize;
+extern PFNOLEFLUSHCLIPBOARD pfnOleFlushClipboard;
+
+typedef HRESULT (WINAPI* PFNCOINITIALIZE)(LPVOID pvReserved);
+typedef void (WINAPI* PFNCOUNINITIALIZE)(void);
+typedef HRESULT (WINAPI* PFNCOCREATEINSTANCE)
+    (REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID riid, LPVOID* ppv);
+
+extern PFNCOINITIALIZE pfnCoInitialize;
+extern PFNCOUNINITIALIZE pfnCoUninitialize;
+extern PFNCOCREATEINSTANCE pfnCoCreateInstance;
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif // QT_WINDOWS_H

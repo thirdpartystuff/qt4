@@ -196,7 +196,7 @@ bool QClipboard::event(QEvent *e)
     if (!m) {
         // this is sent to render all formats at app shut down
         if (ownsClipboard()) {
-            OleFlushClipboard();
+            if (pfnOleFlushClipboard) pfnOleFlushClipboard();
             d->releaseIData();
         }
         return true;

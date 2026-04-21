@@ -35,7 +35,7 @@
 #include <private/qmutexpool_p.h>
 
 #include <sys/types.h>
-#include <windows.h>
+#include <qt_windows.h>
 #include <direct.h>
 #include <objbase.h>
 #include <shlobj.h>
@@ -912,6 +912,9 @@ bool QFSFileEnginePrivate::doStat() const
 QString
 QFSFileEnginePrivate::getLink() const
 {
+    if (!pfnCoInitialize || !pfnCoUninitialize || !pfnCoCreateInstance)
+        return QString();
+
 #if !defined(QT_NO_LIBRARY)
     QString ret;
     QT_WA({
@@ -921,13 +924,13 @@ QFSFileEnginePrivate::getLink() const
         WIN32_FIND_DATA wfd;
         TCHAR szGotPath[MAX_PATH];
         // Get pointer to the IShellLink interface.
-        hres = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
+        hres = pfnCoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
                                     IID_IShellLink, (LPVOID *)&psl);
 
         if(hres == CO_E_NOTINITIALIZED) { // COM was not initalized
             neededCoInit = true;
-            CoInitialize(NULL);
-            hres = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
+            pfnCoInitialize(NULL);
+            hres = pfnCoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
                                         IID_IShellLink, (LPVOID *)&psl);
         }
         if(SUCCEEDED(hres)) {    // Get pointer to the IPersistFile interface.
@@ -950,7 +953,7 @@ QFSFileEnginePrivate::getLink() const
             psl->Release();
         }
         if(neededCoInit)
-            CoUninitialize();
+            pfnCoUninitialize();
     } , {
 	    bool neededCoInit = false;
         IShellLinkA *psl;                            // pointer to IShellLink i/f
@@ -959,13 +962,13 @@ QFSFileEnginePrivate::getLink() const
         char szGotPath[MAX_PATH];
         // Get pointer to the IShellLink interface.
 
-        hres = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
+        hres = pfnCoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
                                     IID_IShellLinkA, (LPVOID *)&psl);
 
         if(hres == CO_E_NOTINITIALIZED) { // COM was not initalized
             neededCoInit = true;
-            CoInitialize(NULL);
-            hres = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
+            pfnCoInitialize(NULL);
+            hres = pfnCoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
                                         IID_IShellLinkA, (LPVOID *)&psl);
         }
         if(SUCCEEDED(hres)) {    // Get pointer to the IPersistFile interface.
@@ -990,7 +993,7 @@ QFSFileEnginePrivate::getLink() const
             psl->Release();
         }
         if(neededCoInit)
-            CoUninitialize();
+            pfnCoUninitialize();
     });
     return ret;
 #else
@@ -1000,6 +1003,9 @@ QFSFileEnginePrivate::getLink() const
 
 bool QFSFileEngine::link(const QString &newName)
 {
+    if (!pfnCoInitialize || !pfnCoUninitialize || !pfnCoCreateInstance)
+        return false;
+
 #if !defined(QT_NO_LIBRARY)
     bool ret = false;
 
@@ -1011,11 +1017,11 @@ bool QFSFileEngine::link(const QString &newName)
         IShellLink *psl;
         bool neededCoInit = false;
 
-        hres = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLink, (void **)&psl);
+        hres = pfnCoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLink, (void **)&psl);
         if(hres == CO_E_NOTINITIALIZED) { // COM was not initalized
                 neededCoInit = true;
-                CoInitialize(NULL);
-                hres = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLink, (void **)&psl);
+                pfnCoInitialize(NULL);
+                hres = pfnCoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLink, (void **)&psl);
         }
         if (SUCCEEDED(hres)) {
             hres = psl->SetPath((TCHAR*)fileName(AbsoluteName).utf16());
@@ -1032,7 +1038,7 @@ bool QFSFileEngine::link(const QString &newName)
             psl->Release();
         }
         if(neededCoInit)
-                CoUninitialize();
+                pfnCoUninitialize();
     } , {
         // the SetPath() call _sometimes_ changes the current path and when it does it sometimes
         // does not let us change it back unless we call currentPath() many times.
@@ -1041,11 +1047,11 @@ bool QFSFileEngine::link(const QString &newName)
         IShellLinkA *psl;
         bool neededCoInit = false;
 
-        hres = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLink, (void **)&psl);
+        hres = pfnCoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLink, (void **)&psl);
         if(hres == CO_E_NOTINITIALIZED) { // COM was not initalized
             neededCoInit = true;
-            CoInitialize(NULL);
-            hres = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLink, (void **)&psl);
+            pfnCoInitialize(NULL);
+            hres = pfnCoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLink, (void **)&psl);
         }
         if (SUCCEEDED(hres)) {
             currentPath();
@@ -1066,7 +1072,7 @@ bool QFSFileEngine::link(const QString &newName)
             psl->Release();
         }
         if(neededCoInit)
-            CoUninitialize();
+            pfnCoUninitialize();
         setCurrentPath(cwd);
     });
     return ret;

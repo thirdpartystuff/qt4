@@ -196,6 +196,16 @@ void qWinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdParam,
                   QString::fromUtf16(uniqueAppID)
                   .lower().remove('\\').utf16());
 #endif
+
+    HINSTANCE hOle32 = LoadLibrary(TEXT("ole32"));
+    if (hOle32) {
+        pfnOleInitialize = (PFNOLEINITIALIZE)GetProcAddress(hOle32, "OleInitialize");
+        pfnOleUninitialize = (PFNOLEUNINITIALIZE)GetProcAddress(hOle32, "OleUninitialize");
+        pfnOleFlushClipboard = (PFNOLEFLUSHCLIPBOARD)GetProcAddress(hOle32, "OleFlushClipboard");
+        pfnCoInitialize = (PFNCOINITIALIZE)GetProcAddress(hOle32, "CoInitialize");
+        pfnCoUninitialize = (PFNCOUNINITIALIZE)GetProcAddress(hOle32, "CoUninitialize");
+        pfnCoCreateInstance = (PFNCOCREATEINSTANCE)GetProcAddress(hOle32, "CoCreateInstance");
+    }
 }
 
 /*!

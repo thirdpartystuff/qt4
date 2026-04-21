@@ -35,6 +35,16 @@
 #include <crtdbg.h>
 #endif
 
+#ifdef _WIN32
+#include <qt_windows.h>
+PFNOLEINITIALIZE pfnOleInitialize;
+PFNOLEUNINITIALIZE pfnOleUninitialize;
+PFNOLEFLUSHCLIPBOARD pfnOleFlushClipboard;
+PFNCOINITIALIZE pfnCoInitialize;
+PFNCOUNINITIALIZE pfnCoUninitialize;
+PFNCOCREATEINSTANCE pfnCoCreateInstance;
+#endif
+
 /*!
     \macro Q_DECLARE_TYPEINFO(Type, Flag)
     \relates <QtGlobal>

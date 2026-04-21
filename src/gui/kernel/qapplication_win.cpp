@@ -586,23 +586,19 @@ void qt_init(QApplicationPrivate *priv, int)
 #endif
 
     if (appInst == 0) {
-        QT_WA({
             appInst = GetModuleHandle(0);
-        }, {
-            appInst = GetModuleHandleA(0);
-        });
     }
 
-#ifndef Q_OS_TEMP
     // Initialize OLE/COM
     //         S_OK means success and S_FALSE means that it has already
     //         been initialized
+  if (pfnOleInitialize) {
     HRESULT r;
-    r = OleInitialize(0);
+    r = pfnOleInitialize(0);
     if (r != S_OK && r != S_FALSE) {
         qWarning("Qt: Could not initialize OLE (error %x)", (unsigned int)r);
     }
-#endif
+  }
 
     // Misc. initialization
 #if defined(QT_DEBUG)
@@ -664,10 +660,8 @@ void qt_cleanup()
     delete QApplicationPrivate::inputContext;
     QApplicationPrivate::inputContext = 0;
 
-#ifndef Q_OS_TEMP
   // Deinitialize OLE/COM
-    OleUninitialize();
-#endif
+    if (pfnOleUninitialize) pfnOleUninitialize();
 }
 
 
