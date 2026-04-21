@@ -334,7 +334,7 @@ static HWND qt_create_internal_window(QEventDispatcherWin32 *eventDispatcher)
 #endif
 
     if (!wnd) {
-        qWarning("Failed to create QEventDispatcherWin32 internal window: %d\n", (int)GetLastError());
+        qFatal("Failed to create QEventDispatcherWin32 internal window: %d\n", (int)GetLastError());
     }
     return wnd;
 }

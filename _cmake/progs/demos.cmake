@@ -25,7 +25,8 @@ set_target_properties(demo PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
     )
 
-target_link_libraries(demo qt)
+target_link_libraries(demo PRIVATE qt)
+extra_link(demo EXE)
 
 if(MSVC)
     source_group("Source Files" FILES _stdafx.h)

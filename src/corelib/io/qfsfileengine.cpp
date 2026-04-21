@@ -108,8 +108,8 @@ QFSFileEngine::open(int flags)
             QT_LSEEK(d->fd, 0, SEEK_END);
 
         d->sequential = 0;
-        struct stat st;
-        ::fstat(d->fd, &st);
+        QT_STATBUF st;
+        QT_FSTAT(d->fd, &st);
         if ((st.st_mode & S_IFMT) != S_IFREG)
             d->sequential = 1;
         return true;
@@ -126,8 +126,8 @@ QFSFileEngine::open(int, int fd)
     d->fd = fd;
     if(d->fd != -1) {
         d->sequential = 0;
-        struct stat st;
-        ::fstat(d->fd, &st);
+        QT_STATBUF st;
+        QT_FSTAT(d->fd, &st);
 	if ((st.st_mode & QT_STAT_MASK) != QT_STAT_REG || !fd) //stdin is non seekable
             d->sequential = 1;
 #ifdef Q_OS_UNIX

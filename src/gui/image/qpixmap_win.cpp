@@ -92,6 +92,11 @@ QPixmap QPixmap::grabWindow(WId winId, int x, int y, int w, int h )
     \sa fromWinHBITMAP(), toWinHBITMAP()
 */
 
+#ifdef _WIN32
+typedef HBITMAP (WINAPI* PFNCREATEDIBSECTION)(HDC, const BITMAPINFO*, UINT, VOID**, HANDLE, DWORD);
+PFNCREATEDIBSECTION g_pfnCreateDIBSection = (PFNCREATEDIBSECTION)GetProcAddress(GetModuleHandleA("gdi32"), "CreateDIBSection");
+#endif
+
 /*!
     Creates a \c HBITMAP equivalent to the QPixmap, based on the
     given \a format, and returns the \c HBITMAP handle.

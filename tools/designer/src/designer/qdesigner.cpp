@@ -36,7 +36,7 @@
 // designer
 #include "qdesigner.h"
 #include "qdesigner_actions.h"
-#include "qdesigner_server.h"
+//#include "qdesigner_server.h"
 #include "qdesigner_settings.h"
 #include "qdesigner_workbench.h"
 #include "qdesigner_toolwindow.h"
@@ -62,10 +62,12 @@ QDesigner::~QDesigner()
 {
     if (m_workbench)
         delete m_workbench;
+    /*
     if (m_server)
         delete m_server;
     if (m_client)
         delete m_client;
+    */
 }
 
 QDesignerWorkbench *QDesigner::workbench() const
@@ -87,6 +89,7 @@ void QDesigner::initialize()
 
     for (int i = 1; i < argc(); ++i)
     {
+        /*
         if (QString::fromLocal8Bit(argv()[i]) == QLatin1String("-server")) {
             m_server = new QDesignerServer();
             printf("%d\n", m_server->serverPort());
@@ -98,7 +101,7 @@ void QDesigner::initialize()
                 if (ok)
                     m_client = new QDesignerClient(port, this);
             }
-        } else if (QString::fromLocal8Bit(argv()[i]) == QLatin1String("-resourcedir")) {
+        } else*/ if (QString::fromLocal8Bit(argv()[i]) == QLatin1String("-resourcedir")) {
             if (i + 1 < argc()) {
                 resourceDir = QFile::decodeName(argv()[++i]);
             } else {

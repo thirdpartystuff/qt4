@@ -14,6 +14,7 @@ call "%~dp0_tools\cmake-3.5.2.cmd" ^
     -G "Ninja" ^
     -DCMAKE_MAKE_PROGRAM="%~dp0_tools\ninja.cmd" ^
     -DCMAKE_BUILD_TYPE=Release ^
+    -DOLD_WINDOWS=TRUE ^
     "%~dp0_cmake\progs" ^
     || exit /B 1
 

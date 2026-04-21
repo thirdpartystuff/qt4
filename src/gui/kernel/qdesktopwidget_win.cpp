@@ -155,10 +155,10 @@ void QDesktopWidgetPrivate::init(QDesktopWidget *that)
 #else
     screenCount = 1;
 
-    if ((user32hnd = LoadLibrary(L"user32.dll"))) {
+    if ((user32hnd = GetModuleHandleA("user32"))) {
         // CE >= 4.0 case
-        enumDisplayMonitors = (EnumFunc)GetProcAddress(user32hnd, L"EnumDisplayMonitors");
-        getMonitorInfo = (InfoFunc)GetProcAddress(user32hnd, L"GetMonitorInfoW");
+        enumDisplayMonitors = (EnumFunc)GetProcAddress(user32hnd, "EnumDisplayMonitors");
+        getMonitorInfo = (InfoFunc)GetProcAddress(user32hnd, "GetMonitorInfoW");
     }
 
     if ((!enumDisplayMonitors || !getMonitorInfo) && qt_cever >= 400)
@@ -167,7 +167,7 @@ void QDesktopWidgetPrivate::init(QDesktopWidget *that)
     if (!user32hnd || !enumDisplayMonitors || !getMonitorInfo) {
         rects->resize(screenCount);
         for (int i = 0; i < screenCount; ++i)
-            rects->at(i) = that->rect();
+            rects->replace(i, that->rect());
 
         RECT r;
         SystemParametersInfo(SPI_GETWORKAREA, 0, &r, 0);
@@ -183,7 +183,7 @@ void QDesktopWidgetPrivate::init(QDesktopWidget *that)
 
         workrects->resize(screenCount);
         for (int j = 0; j < screenCount; ++j)
-            workrects->at(j) = qr;
+            workrects->replace(j, qr);
         return;
     }
 

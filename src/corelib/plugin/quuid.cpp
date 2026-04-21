@@ -393,7 +393,7 @@ bool QUuid::operator>(const QUuid &other) const
 QUuid QUuid::createUuid()
 {
     GUID guid;
-    CoCreateGuid(&guid);
+    UuidCreate(&guid);
     QUuid result = guid;
     return result;
 }

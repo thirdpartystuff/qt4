@@ -63,6 +63,10 @@
 #  include <malloc.h>
 #endif
 
+#ifdef _WIN32
+typedef HBITMAP (WINAPI* PFNCREATEDIBSECTION)(HDC, const BITMAPINFO*, UINT, VOID**, HANDLE, DWORD);
+extern PFNCREATEDIBSECTION g_pfnCreateDIBSection;
+#endif
 
 
 /*
@@ -2150,7 +2154,7 @@ QRasterBuffer::~QRasterBuffer()
     if (m_bitmap || m_hdc) {
         Q_ASSERT(m_hdc);
         Q_ASSERT(m_bitmap);
-        DeleteObject(m_hdc);
+        DeleteDC(m_hdc);
         DeleteObject(m_bitmap);
     }
 #endif
@@ -2247,7 +2251,7 @@ void QRasterBuffer::prepareBuffer(int width, int height)
     if (m_bitmap || m_hdc) {
         Q_ASSERT(m_hdc);
         Q_ASSERT(m_bitmap);
-        DeleteObject(m_hdc);
+        DeleteDC(m_hdc);
         DeleteObject(m_bitmap);
     }
 

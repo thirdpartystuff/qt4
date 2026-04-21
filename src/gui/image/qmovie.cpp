@@ -136,6 +136,7 @@
     \sa QMovie::stop()
 */
 
+#include <qglobal.h>
 #include "qmovie.h"
 #ifndef QT_NO_MOVIE
 

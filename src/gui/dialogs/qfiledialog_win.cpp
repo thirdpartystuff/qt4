@@ -52,7 +52,7 @@
 // resolving the W methods manually is needed, because Windows 95 doesn't include
 // these methods in Shell32.lib (not even stubs!), so you'd get an unresolved symbol
 // when Qt calls getEsistingDirectory(), etc.
-typedef LPITEMIDLIST (WINAPI *PtrSHBrowseForFolder)(BROWSEINFO*);
+typedef LPITEMIDLIST (WINAPI *PtrSHBrowseForFolder)(BROWSEINFOW*);
 static PtrSHBrowseForFolder ptrSHBrowseForFolder = 0;
 typedef BOOL (WINAPI *PtrSHGetPathFromIDList)(LPITEMIDLIST,LPWSTR);
 static PtrSHGetPathFromIDList ptrSHGetPathFromIDList = 0;
@@ -86,8 +86,8 @@ static void qt_win_resolve_libs()
 #endif
 }
 #ifdef Q_OS_TEMP
-#define PtrSHBrowseForFolder SHBrowseForFolder ;
-#define PtrSHGetPathFromIDList SHGetPathFromIDList;
+//#define PtrSHBrowseForFolder SHBrowseForFolder ;
+//#define PtrSHGetPathFromIDList SHGetPathFromIDList;
 #endif
 
 
@@ -607,7 +607,7 @@ static int __stdcall winGetExistDirCallbackProc(HWND hwnd,
     } else if (uMsg == BFFM_SELCHANGED) {
         QT_WA({
             qt_win_resolve_libs();
-            TCHAR path[MAX_PATH];
+            WCHAR path[MAX_PATH];
             ptrSHGetPathFromIDList(LPITEMIDLIST(lParam), path);
             QString tmpStr = QString::fromUtf16((ushort*)path);
             if (!tmpStr.isEmpty())
@@ -657,15 +657,15 @@ QString qt_win_get_existing_directory(const QFileDialogArgs &args)
     QT_WA({
         qt_win_resolve_libs();
         QString initDir = QDir::convertSeparators(args.directory);
-        TCHAR path[MAX_PATH];
-        TCHAR initPath[MAX_PATH];
+        WCHAR path[MAX_PATH];
+        WCHAR initPath[MAX_PATH];
         initPath[0] = 0;
         path[0] = 0;
         tTitle = title;
-        BROWSEINFO bi;
+        BROWSEINFOW bi;
         bi.hwndOwner = (parent ? parent->winId() : 0);
         bi.pidlRoot = NULL;
-        bi.lpszTitle = (TCHAR*)tTitle.utf16();
+        bi.lpszTitle = (WCHAR*)tTitle.utf16();
         bi.pszDisplayName = initPath;
         bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_STATUSTEXT | BIF_NEWDIALOGSTYLE;
         bi.lpfn = winGetExistDirCallbackProc;

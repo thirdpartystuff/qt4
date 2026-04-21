@@ -6,7 +6,7 @@ set(src_3rdparty_zlib
     "${ROOT}/src/3rdparty/zlib/crc32.h"
     "${ROOT}/src/3rdparty/zlib/deflate.c"
     "${ROOT}/src/3rdparty/zlib/deflate.h"
-    "${ROOT}/src/3rdparty/zlib/gzio.c"
+    #"${ROOT}/src/3rdparty/zlib/gzio.c"
     "${ROOT}/src/3rdparty/zlib/infback.c"
     "${ROOT}/src/3rdparty/zlib/inffast.c"
     "${ROOT}/src/3rdparty/zlib/inffast.h"

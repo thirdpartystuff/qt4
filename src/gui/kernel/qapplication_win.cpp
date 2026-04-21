@@ -354,9 +354,10 @@ static void qt_show_system_menu(QWidget* tlw)
 #undef enabled
 #undef disabled
 
-    int ret = TrackPopupMenuEx(menu,
+    int ret = TrackPopupMenu(menu,
                                 TPM_LEFTALIGN  | TPM_TOPALIGN | TPM_NONOTIFY | TPM_RETURNCMD,
                                 tlw->geometry().x(), tlw->geometry().y(),
+                                0,
                                 tlw->winId(),
                                 0);
     if (ret)

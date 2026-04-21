@@ -68,7 +68,7 @@ moc("${ROOT}/tools/designer/src/designer/qdesigner_formwindow.h")
 moc("${ROOT}/tools/designer/src/designer/qdesigner_objectinspector.h")
 moc("${ROOT}/tools/designer/src/designer/qdesigner_propertyeditor.h")
 moc("${ROOT}/tools/designer/src/designer/qdesigner_resourceeditor.h")
-moc("${ROOT}/tools/designer/src/designer/qdesigner_server.h")
+#moc("${ROOT}/tools/designer/src/designer/qdesigner_server.h")
 moc("${ROOT}/tools/designer/src/designer/qdesigner_signalsloteditor.h")
 moc("${ROOT}/tools/designer/src/designer/qdesigner_toolwindow.h")
 moc("${ROOT}/tools/designer/src/designer/qdesigner_widgetbox.h")
@@ -324,8 +324,8 @@ set(src_designer
     "${ROOT}/tools/designer/src/designer/qdesigner_propertyeditor.h"
     "${ROOT}/tools/designer/src/designer/qdesigner_resourceeditor.cpp"
     "${ROOT}/tools/designer/src/designer/qdesigner_resourceeditor.h"
-    "${ROOT}/tools/designer/src/designer/qdesigner_server.cpp"
-    "${ROOT}/tools/designer/src/designer/qdesigner_server.h"
+    #"${ROOT}/tools/designer/src/designer/qdesigner_server.cpp"
+    #"${ROOT}/tools/designer/src/designer/qdesigner_server.h"
     "${ROOT}/tools/designer/src/designer/qdesigner_settings.cpp"
     "${ROOT}/tools/designer/src/designer/qdesigner_settings.h"
     "${ROOT}/tools/designer/src/designer/qdesigner_signalsloteditor.cpp"
@@ -534,7 +534,8 @@ target_include_directories(designer PRIVATE
     "${ROOT}/tools/designer/src/lib/uilib"
     )
 
-target_link_libraries(designer qt)
+target_link_libraries(designer PRIVATE qt)
+extra_link(designer EXE)
 
 if(MSVC)
     source_group("Source Files" FILES _stdafx.h)

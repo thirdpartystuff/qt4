@@ -51,6 +51,9 @@
 #include <private/qt_x11_p.h>
 #include "qinputcontextfactory.h"
 #endif
+#ifdef _WIN32
+#include <rpc.h>
+#endif
 
 #include <qthread.h>
 #include <private/qthread_p.h>
@@ -3350,14 +3353,18 @@ QSessionManager::QSessionManager(QApplication * app, QString &id, QString &key)
     setObjectName("qt_sessionmanager");
     qt_session_manager_self = this;
 #if defined(Q_WS_WIN) && !defined(Q_OS_TEMP)
-    wchar_t guidstr[40];
+    //wchar_t guidstr[40];
     GUID guid;
-    CoCreateGuid(&guid);
-    StringFromGUID2(guid, guidstr, 40);
+    UuidCreate(&guid);
+    //StringFromGUID2(guid, guidstr, 40);
+    unsigned short* guidstr = NULL;
+    UuidToStringW(&guid, &guidstr);
     id = QString::fromUtf16((ushort*)guidstr);
-    CoCreateGuid(&guid);
-    StringFromGUID2(guid, guidstr, 40);
+    RpcStringFreeW(&guidstr);
+    UuidCreate(&guid);
+    UuidToStringW(&guid, &guidstr);
     key = QString::fromUtf16((ushort*)guidstr);
+    RpcStringFreeW(&guidstr);
 #endif
     d->sessionId = id;
     d->sessionKey = key;

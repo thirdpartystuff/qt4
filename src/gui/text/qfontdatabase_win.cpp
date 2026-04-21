@@ -391,7 +391,7 @@ storeFont(ENUMLOGFONTEX* f, NEWTEXTMETRIC *textmetric, int type, LPARAM /*p*/)
             });
 #else
             CHARSETINFO csi;
-            DWORD charset = textmetric->tmCharSet;
+            DWORD charset = textmetric->ntmTm.tmCharSet;
             TranslateCharsetInfo(&charset, &csi, TCI_SRCCHARSET);
             signature = csi.fs;
 #endif
@@ -494,7 +494,7 @@ void populate_database(const QString& fam)
         lf.lfPitchAndFamily = 0;
 
         EnumFontFamilies(dummy, lf.lfFaceName,
-            (FONTENUMPROC)storeFont, (LPARAM)db);
+            (FONTENUMPROC)storeFont, (LPARAM)privateDb());
 #endif
 
 

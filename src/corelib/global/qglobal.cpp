@@ -1780,6 +1780,11 @@ void qt_message_output(QtMsgType msgType, const char *buf)
             _CrtDbgBreak();
 #endif
 
+      #ifdef _WIN32
+        MessageBoxA(NULL, buf, NULL, MB_ICONERROR | MB_OK);
+        DebugBreak();
+      #endif
+
 #if defined(Q_OS_UNIX) && defined(QT_DEBUG)
         abort(); // trap; generates core dump
 #else
