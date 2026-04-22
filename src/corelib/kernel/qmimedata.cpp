@@ -27,9 +27,16 @@
 #include "qurl.h"
 #include "qstringlist.h"
 
+extern const QByteArray ba_text_plain;
+extern const QByteArray ba_text_uri_list;
 const QByteArray ba_text_plain("text/plain");
 const QByteArray ba_text_uri_list("text/uri-list");
 
+extern const QString s_text_plain;
+extern const QString s_text_html;
+extern const QString s_text_uri_list;
+extern const QString s_application_x_qt_image;
+extern const QString s_application_x_color;
 const QString s_text_plain("text/plain");
 const QString s_text_html("text/html");
 const QString s_text_uri_list("text/uri-list");
