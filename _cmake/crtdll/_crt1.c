@@ -102,10 +102,18 @@ _mingw32_init_fmode (void)
 #endif
 }
 
+typedef struct EXCEPTION_REGISTRATION_RECORD {
+    struct EXCEPTION_REGISTRATION_RECORD* prev;
+    long(__cdecl* handler)(EXCEPTION_RECORD* rec, void* frame, CONTEXT* context, void* dispatcher);
+} EXCEPTION_REGISTRATION_RECORD;
+
+static CRITICAL_SECTION seh_cs;
+static EXCEPTION_REGISTRATION_RECORD* seh_rec;
+
 /* This function will be called when a trap occurs. Thanks to Jacob
    Navia for his contribution. */
 static CALLBACK long
-_gnu_exception_handler (EXCEPTION_POINTERS * exception_data)
+_gnu_exception_handler_ (EXCEPTION_POINTERS * exception_data, BOOL isLastResort)
 {
   void (*old_handler) (int);
   long action = EXCEPTION_CONTINUE_SEARCH;
@@ -180,7 +188,49 @@ _gnu_exception_handler (EXCEPTION_POINTERS * exception_data)
     default:
       break;
     }
+
+  if (action != EXCEPTION_CONTINUE_EXECUTION) {
+    EnterCriticalSection(&seh_cs);
+
+    static BOOL shown;
+    if (shown) {
+        DebugBreak();
+        ExitProcess(1);
+    }
+    shown = TRUE;
+
+    char buf[256];
+    sprintf(buf, "Crash!\nException code: 0x%08X\nAddress: 0x%p",
+        exception_data->ExceptionRecord->ExceptionCode, exception_data->ExceptionRecord->ExceptionAddress);
+    MessageBoxA(NULL, buf, NULL, MB_OK | MB_ICONERROR);
+
+    LeaveCriticalSection(&seh_cs);
+    return EXCEPTION_CONTINUE_SEARCH;
+  }
+
   return action;
+}
+
+static CALLBACK long
+_gnu_exception_handler(EXCEPTION_POINTERS* exception_data)
+{
+    return _gnu_exception_handler_(exception_data, TRUE);
+}
+
+static long __cdecl seh_handler(EXCEPTION_RECORD* rec, void* frame, CONTEXT* context, void* dispatcher)
+{
+    EXCEPTION_POINTERS p;
+    p.ExceptionRecord = rec;
+    p.ContextRecord = context;
+    long action = _gnu_exception_handler_(&p, FALSE);
+    if (action != EXCEPTION_CONTINUE_EXECUTION) {
+        __asm__ __volatile__(
+            "movl %0, %%fs:0\n\t"
+            : : "r" (seh_rec->prev) : "eax", "memory"
+            );
+    }
+
+    return action;
 }
 
 /*
@@ -189,7 +239,14 @@ _gnu_exception_handler (EXCEPTION_POINTERS * exception_data)
 static void  __attribute__((noreturn))
 __mingw_CRTStartup (void)
 {
+  EXCEPTION_REGISTRATION_RECORD rec;
   int nRet;
+
+  typedef BOOL (WINAPI* PFNISDEBUGGERPRESENT)(void);
+  HINSTANCE hKernel32 = GetModuleHandle(TEXT("kernel32"));
+  PFNISDEBUGGERPRESENT pfnIsDebuggerPresent = (PFNISDEBUGGERPRESENT)GetProcAddress(hKernel32, "IsDebuggerPresent");
+  if (pfnIsDebuggerPresent && pfnIsDebuggerPresent())
+    goto skip_seh;
 
   /*
    * Set up the top-level exception handler so that signal handling
@@ -198,6 +255,23 @@ __mingw_CRTStartup (void)
    * 
    */
   SetUnhandledExceptionFilter (_gnu_exception_handler);
+
+  DWORD ver = GetVersion();
+  BOOL isWin32s = (ver & 0x80000000) != 0 && LOBYTE(LOWORD(ver)) < 4;
+  //BOOL isNT31 = (ver & 0x80000000) == 0 && LOWORD(ver) == 0x0A03;
+  if (!isWin32s) {
+    InitializeCriticalSection(&seh_cs);
+    seh_rec = &rec;
+    rec.handler = seh_handler;
+    __asm__ __volatile__ (
+      "movl %%fs:0, %%eax\n\t"
+      "movl %%eax, (%0)\n\t"
+      "movl %0, %%fs:0\n\t"
+      : : "r" (&rec) : "eax", "memory"
+      );
+  }
+
+skip_seh:
 
   /*
    * Initialize floating point unit.
