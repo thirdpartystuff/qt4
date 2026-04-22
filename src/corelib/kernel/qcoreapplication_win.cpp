@@ -94,28 +94,56 @@ Q_CORE_EXPORT void qWinMsgHandler(QtMsgType t, const char* str)
     staticMutex.unlock();
 }
 
-bool isWin9x(void)
+struct Dll { const char* asciiName; const TCHAR* name; HINSTANCE handle; };
+static Dll gdi32  = { "GDI32",  TEXT("GDI32"),  NULL };
+static Dll ole32  = { "OLE32",  TEXT("OLE32"),  NULL };
+static Dll rpcrt4 = { "RPCRT4", TEXT("RPCRT4"), NULL };
+
+static HINSTANCE GetModuleHandle_(Dll* dll)
 {
-    return ((QSysInfo::WindowsVersion & QSysInfo::WV_DOS_based) != 0);
+    HINSTANCE handle = GetModuleHandle(dll->name);
+    dll->handle = handle;
+  #ifndef QT_NO_DEBUG
+    char buf[MAX_PATH] = {0};
+    GetModuleFileNameA(handle, buf, sizeof(buf));
+    qDebug("GetModuleHandle(\"%s\"): %p, %s", dll->asciiName, handle, buf);
+  #endif
+    return handle;
 }
 
-bool isWinNT(void)
+static HINSTANCE LoadLibrary_(Dll* dll)
 {
-    return ((QSysInfo::WindowsVersion & QSysInfo::WV_DOS_based) == 0);
+    HINSTANCE handle = LoadLibrary(dll->name);
+    dll->handle = handle;
+  #ifndef QT_NO_DEBUG
+    char buf[MAX_PATH] = {0};
+    GetModuleFileNameA(handle, buf, sizeof(buf));
+    qDebug("LoadLibrary(\"%s\"): %p, %s", dll->asciiName, handle, buf);
+  #endif
+    return handle;
 }
 
-static FARPROC GetProcAddress9x(HINSTANCE hModule, LPCSTR lpProcName)
+static FARPROC GetProcAddress_(Dll* dll, LPCSTR lpProcName)
+{
+    FARPROC ptr = GetProcAddress(dll->handle, lpProcName);
+  #ifndef QT_NO_DEBUG
+    qDebug("%s: GetProcAddress(\"%s\"): %p", dll->asciiName, lpProcName, (void*)ptr);
+  #endif
+    return ptr;
+}
+
+static FARPROC GetProcAddress9x(Dll* dll, LPCSTR lpProcName)
 {
     if (!isWin9x())
         return NULL;
-    return GetProcAddress(hModule, lpProcName);
+    return GetProcAddress_(dll, lpProcName);
 }
 
-static FARPROC GetProcAddressNT(HINSTANCE hModule, LPCSTR lpProcName)
+static FARPROC GetProcAddressNT(Dll* dll, LPCSTR lpProcName)
 {
     if (!isWinNT())
         return NULL;
-    return GetProcAddress(hModule, lpProcName);
+    return GetProcAddress_(dll, lpProcName);
 }
 
 /*****************************************************************************
@@ -214,45 +242,38 @@ void qWinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdParam,
                   .lower().remove('\\').utf16());
 #endif
 
-    HINSTANCE hGdi32 = GetModuleHandle(TEXT("gdi32"));
-    if (hGdi32) {
+    if (GetModuleHandle_(&gdi32)) {
         if (!isWin32s())
-            pfnCreateDIBSection = (PFNCREATEDIBSECTION)GetProcAddress(hGdi32, "CreateDIBSection");
-        pfnGetTextCharsetInfo = (PFNGETTEXTCHARSETINFO)GetProcAddress(hGdi32, "GetTextCharsetInfo");
-        pfnEnumFontFamiliesExA = (PFNENUMFONTFAMILIESEXA)GetProcAddress9x(hGdi32, "EnumFontFamiliesExA");
-        pfnEnumFontFamiliesExW = (PFNENUMFONTFAMILIESEXW)GetProcAddressNT(hGdi32, "EnumFontFamiliesExW");
-        pfnTranslateCharsetInfo = (PFNTRANSLATECHARSETINFO)GetProcAddress(hGdi32, "TranslateCharsetInfo");
+            pfnCreateDIBSection = (PFNCREATEDIBSECTION)GetProcAddress_(&gdi32, "CreateDIBSection");
+        pfnGetTextCharsetInfo = (PFNGETTEXTCHARSETINFO)GetProcAddress_(&gdi32, "GetTextCharsetInfo");
+        pfnEnumFontFamiliesExA = (PFNENUMFONTFAMILIESEXA)GetProcAddress9x(&gdi32, "EnumFontFamiliesExA");
+        pfnEnumFontFamiliesExW = (PFNENUMFONTFAMILIESEXW)GetProcAddressNT(&gdi32, "EnumFontFamiliesExW");
+        pfnTranslateCharsetInfo = (PFNTRANSLATECHARSETINFO)GetProcAddress_(&gdi32, "TranslateCharsetInfo");
     }
 
-    HINSTANCE hOle32 = LoadLibrary(TEXT("ole32"));
-    if (hOle32) {
-        pfnOleInitialize = (PFNOLEINITIALIZE)GetProcAddress(hOle32, "OleInitialize");
-        pfnOleUninitialize = (PFNOLEUNINITIALIZE)GetProcAddress(hOle32, "OleUninitialize");
-        pfnOleGetClipboard = (PFNOLEGETCLIPBOARD)GetProcAddress(hOle32, "OleGetClipboard");
-        pfnOleSetClipboard = (PFNOLESETCLIPBOARD)GetProcAddress(hOle32, "OleSetClipboard");
-        pfnOleIsCurrentClipboard = (PFNOLEISCURRENTCLIPBOARD)GetProcAddress(hOle32, "OleIsCurrentClipboard");
-        pfnOleFlushClipboard = (PFNOLEFLUSHCLIPBOARD)GetProcAddress(hOle32, "OleFlushClipboard");
-        pfnCoInitialize = (PFNCOINITIALIZE)GetProcAddress(hOle32, "CoInitialize");
-        pfnCoUninitialize = (PFNCOUNINITIALIZE)GetProcAddress(hOle32, "CoUninitialize");
-        pfnCoGetMalloc = (PFNCOGETMALLOC)GetProcAddress(hOle32, "CoGetMalloc");
-        pfnCoTaskMemFree = (PFNCOTASKMEMFREE)GetProcAddress(hOle32, "CoTaskMemFree");
-        pfnCoCreateGuid = (PFNCOCREATEGUID)GetProcAddress(hOle32, "CoCreateGuid");
-        pfnCoCreateInstance = (PFNCOCREATEINSTANCE)GetProcAddress(hOle32, "CoCreateInstance");
-        pfnCoLockObjectExternal = (PFNCOLOCKOBJECTEXTERNAL)GetProcAddress(hOle32, "CoLockObjectExternal");
-        pfnReleaseStgMedium = (PFNRELEASESTGMEDIUM)GetProcAddress(hOle32, "ReleaseStgMedium");
-        pfnStringFromGUID2 = (PFNSTRINGFROMGUID2)GetProcAddress(hOle32, "StringFromGUID2");
-        pfnRegisterDragDrop = (PFNREGISTERDRAGDROP)GetProcAddress(hOle32, "RegisterDragDrop");
-        pfnDoDragDrop = (PFNDODRAGDROP)GetProcAddress(hOle32, "DoDragDrop");
-        pfnRevokeDragDrop = (PFNREVOKEDRAGDROP)GetProcAddress(hOle32, "RevokeDragDrop");
-    }
-
-    if (!hOle32) {
-        HINSTANCE hRpCrt4 = LoadLibrary(TEXT("rpcrt4"));
-        if (hRpCrt4) {
-            pfnUuidCreate = (PFNUUIDCREATE)GetProcAddress(hRpCrt4, "UuidCreate");
-            pfnUuidToStringW = (PFNUUIDTOSTRINGW)GetProcAddress(hRpCrt4, "UuidToStringW");
-            pfnRpcStringFreeW = (PFNRPCSTRINGFREEW)GetProcAddress(hRpCrt4, "RpcStringFreeW");
-        }
+    if (LoadLibrary_(&ole32)) {
+        pfnOleInitialize = (PFNOLEINITIALIZE)GetProcAddress_(&ole32, "OleInitialize");
+        pfnOleUninitialize = (PFNOLEUNINITIALIZE)GetProcAddress_(&ole32, "OleUninitialize");
+        pfnOleGetClipboard = (PFNOLEGETCLIPBOARD)GetProcAddress_(&ole32, "OleGetClipboard");
+        pfnOleSetClipboard = (PFNOLESETCLIPBOARD)GetProcAddress_(&ole32, "OleSetClipboard");
+        pfnOleIsCurrentClipboard = (PFNOLEISCURRENTCLIPBOARD)GetProcAddress_(&ole32, "OleIsCurrentClipboard");
+        pfnOleFlushClipboard = (PFNOLEFLUSHCLIPBOARD)GetProcAddress_(&ole32, "OleFlushClipboard");
+        pfnCoInitialize = (PFNCOINITIALIZE)GetProcAddress_(&ole32, "CoInitialize");
+        pfnCoUninitialize = (PFNCOUNINITIALIZE)GetProcAddress_(&ole32, "CoUninitialize");
+        pfnCoGetMalloc = (PFNCOGETMALLOC)GetProcAddress_(&ole32, "CoGetMalloc");
+        pfnCoTaskMemFree = (PFNCOTASKMEMFREE)GetProcAddress_(&ole32, "CoTaskMemFree");
+        pfnCoCreateGuid = (PFNCOCREATEGUID)GetProcAddress_(&ole32, "CoCreateGuid");
+        pfnCoCreateInstance = (PFNCOCREATEINSTANCE)GetProcAddress_(&ole32, "CoCreateInstance");
+        pfnCoLockObjectExternal = (PFNCOLOCKOBJECTEXTERNAL)GetProcAddress_(&ole32, "CoLockObjectExternal");
+        pfnReleaseStgMedium = (PFNRELEASESTGMEDIUM)GetProcAddress_(&ole32, "ReleaseStgMedium");
+        pfnStringFromGUID2 = (PFNSTRINGFROMGUID2)GetProcAddress_(&ole32, "StringFromGUID2");
+        pfnRegisterDragDrop = (PFNREGISTERDRAGDROP)GetProcAddress_(&ole32, "RegisterDragDrop");
+        pfnDoDragDrop = (PFNDODRAGDROP)GetProcAddress_(&ole32, "DoDragDrop");
+        pfnRevokeDragDrop = (PFNREVOKEDRAGDROP)GetProcAddress_(&ole32, "RevokeDragDrop");
+    } else if (LoadLibrary_(&rpcrt4)) {
+        pfnUuidCreate = (PFNUUIDCREATE)GetProcAddress_(&rpcrt4, "UuidCreate");
+        pfnUuidToStringW = (PFNUUIDTOSTRINGW)GetProcAddress_(&rpcrt4, "UuidToStringW");
+        pfnRpcStringFreeW = (PFNRPCSTRINGFREEW)GetProcAddress_(&rpcrt4, "RpcStringFreeW");
     }
 }
 
