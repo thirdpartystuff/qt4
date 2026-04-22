@@ -85,6 +85,7 @@ PFNIMMSETCOMPOSITIONWINDOW pfnImmSetCompositionWindow;
 PFNIMMSETCOMPOSITIONFONTA pfnImmSetCompositionFontA;
 PFNIMMSETCOMPOSITIONFONTW pfnImmSetCompositionFontW;
 PFNIMMASSOCIATECONTEXT pfnImmAssociateContext;
+PFNWSAASYNCSELECT pfnWSAAsyncSelect;
 bool isWin32s(void) { return QSysInfo::WindowsVersion == QSysInfo::WV_32s; }
 bool useWide(void) { return ((QSysInfo::WindowsVersion & QSysInfo::WV_DOS_based) == 0); }
 #endif

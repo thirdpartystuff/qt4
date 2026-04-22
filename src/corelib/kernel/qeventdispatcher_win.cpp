@@ -509,7 +509,9 @@ void QEventDispatcherWin32::registerSocketNotifier(QSocketNotifier *notifier)
     sn->fd  = socket;
     dict->insert(sn->fd, sn);
 
-#ifndef Q_OS_TEMP
+  if (!pfnWSAAsyncSelect)
+    qWarning("QSocketNotifier: WSAAsyncSelect not available.");
+  else {
     int sn_event = 0;
     if (d->sn_read.contains(socket))
         sn_event |= FD_READ | FD_CLOSE | FD_ACCEPT;
@@ -519,22 +521,21 @@ void QEventDispatcherWin32::registerSocketNotifier(QSocketNotifier *notifier)
         sn_event |= FD_OOB;
     // BoundsChecker may emit a warning for WSAAsyncSelect when sn_event == 0
     // This is a BoundsChecker bug and not a Qt bug
-    WSAAsyncSelect(socket, d->internalHwnd, sn_event ? WM_USER : 0, sn_event);
-#else
+    pfnWSAAsyncSelect(socket, d->internalHwnd, sn_event ? WM_USER : 0, sn_event);
+  }
 /*
     fd_set        rd,wt,ex;
     FD_ZERO(&rd);
     FD_ZERO(&wt);
     FD_ZERO(&ex);
-    if (sn_read && sn_read->find(sockfd))
-        FD_SET(sockfd, &rd);
-    if (sn_write && sn_write->find(sockfd))
-        FD_SET(sockfd, &wt);
-    if (sn_except && sn_except->find(sockfd))
-        FD_SET(sockfd, &ex);
+    if (d->sn_read.find(socket))
+        FD_SET(socket, &rd);
+    if (d->sn_write.find(socket))
+        FD_SET(socket, &wt);
+    if (d->sn_except.find(socket))
+        FD_SET(socket, &ex);
     select(1, &rd, &wt, &ex, NULL);
 */
-#endif
 }
 
 void QEventDispatcherWin32::unregisterSocketNotifier(QSocketNotifier *notifier)
@@ -557,7 +558,9 @@ void QEventDispatcherWin32::unregisterSocketNotifier(QSocketNotifier *notifier)
     dict->remove(socket);
     delete sn;
 
-#ifndef Q_OS_TEMP // ### This probably needs fixing
+  if (!pfnWSAAsyncSelect)
+    qWarning("QSocketNotifier: WSAAsyncSelect not available.");
+  else {
     int sn_event = 0;
     if (d->sn_read.contains(socket))
         sn_event |= FD_READ | FD_CLOSE | FD_ACCEPT;
@@ -567,20 +570,21 @@ void QEventDispatcherWin32::unregisterSocketNotifier(QSocketNotifier *notifier)
         sn_event |= FD_OOB;
     // BoundsChecker may emit a warning for WSAAsyncSelect when sn_event == 0
     // This is a BoundsChecker bug and not a Qt bug
-    WSAAsyncSelect(socket, d->internalHwnd, sn_event ? WM_USER : 0, sn_event);
-#else
+    pfnWSAAsyncSelect(socket, d->internalHwnd, sn_event ? WM_USER : 0, sn_event);
+  }
+/*
     fd_set        rd,wt,ex;
     FD_ZERO(&rd);
     FD_ZERO(&wt);
     FD_ZERO(&ex);
-    if (sn_read && sn_read->find(sockfd))
-        FD_SET(sockfd, &rd);
-    if (sn_write && sn_write->find(sockfd))
-        FD_SET(sockfd, &wt);
-    if (sn_except && sn_except->find(sockfd))
-        FD_SET(sockfd, &ex);
+    if (d->sn_read.find(socket))
+        FD_SET(socket, &rd);
+    if (d->sn_write.find(socket))
+        FD_SET(socket, &wt);
+    if (d->sn_except.find(socket))
+        FD_SET(socket, &ex);
     select(1, &rd, &wt, &ex, NULL);
-#endif
+*/
 }
 
 void QEventDispatcherWin32::registerTimer(int timerId, int interval, QObject *object)

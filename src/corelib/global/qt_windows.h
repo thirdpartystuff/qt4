@@ -208,6 +208,10 @@ extern PFNIMMSETCOMPOSITIONFONTA pfnImmSetCompositionFontA;
 extern PFNIMMSETCOMPOSITIONFONTW pfnImmSetCompositionFontW;
 extern PFNIMMASSOCIATECONTEXT pfnImmAssociateContext;
 
+typedef int (WINAPI* PFNWSAASYNCSELECT)(SOCKET, HWND, u_int, long);
+
+extern PFNWSAASYNCSELECT pfnWSAAsyncSelect;
+
 #ifdef __cplusplus
 }
 #endif
