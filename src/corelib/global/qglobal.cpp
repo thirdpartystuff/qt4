@@ -1812,12 +1812,30 @@ void qt_win_print_debug_message(const char* str)
     if (!str)
         str = "(null)";
 
+  #ifndef QT_NO_DEBUG
+    DWORD dwBytesWritten;
+    {
+        QByteArray lstr = str;
+        lstr += "\r\n";
+        if (g_hDebugFile == INVALID_HANDLE_VALUE) {
+            char buf[MAX_PATH] = {0};
+            GetModuleFileNameA(NULL, buf, sizeof(buf));
+            char* pt = strrchr(buf, '.');
+            if (pt)
+                strcpy(pt, ".txt");
+            else
+                strcat(buf, ".txt");
+            g_hDebugFile = CreateFileA(buf, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, 0, NULL);
+        }
+        WriteFile(g_hDebugFile, lstr.constData(), lstr.length(), &dwBytesWritten, NULL);
+    }
+  #endif
+
     if (useWide()) {
         QString fstr(str);
         fstr += "\r\n";
         OutputDebugStringW((LPCWSTR)fstr.utf16());
       #ifndef QT_NO_DEBUG
-        DWORD dwBytesWritten;
         AllocConsole();
         WriteConsoleW(GetStdHandle(STD_ERROR_HANDLE), (LPCWSTR)fstr.utf16(), fstr.length(), &dwBytesWritten, NULL);
       #endif
@@ -1826,20 +1844,7 @@ void qt_win_print_debug_message(const char* str)
         lstr += "\r\n";
         OutputDebugStringA(lstr.constData());
       #ifndef QT_NO_DEBUG
-        DWORD dwBytesWritten;
-        if (isWin32s()) {
-            if (g_hDebugFile == INVALID_HANDLE_VALUE) {
-                char buf[MAX_PATH] = {0};
-                GetModuleFileNameA(NULL, buf, sizeof(buf));
-                char* pt = strrchr(buf, '.');
-                if (pt)
-                    strcpy(pt, ".txt");
-                else
-                    strcat(buf, ".txt");
-                g_hDebugFile = CreateFileA(buf, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, 0, NULL);
-            }
-            WriteFile(g_hDebugFile, lstr.constData(), lstr.length(), &dwBytesWritten, NULL);
-        } else {
+        if (!isWin32s()) {
             AllocConsole();
             WriteConsoleA(GetStdHandle(STD_ERROR_HANDLE), lstr.constData(), lstr.length(), &dwBytesWritten, NULL);
         }

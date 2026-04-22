@@ -107,7 +107,10 @@ static HINSTANCE GetModuleHandle_(Dll* dll)
   #ifndef QT_NO_DEBUG
     char buf[MAX_PATH] = {0};
     GetModuleFileNameA(handle, buf, sizeof(buf));
-    qDebug("GetModuleHandle(\"%s\"): %p, %s", dll->asciiName, handle, buf);
+    if (handle)
+        qDebug("GetModuleHandle(\"%s\"): %p, %s", dll->asciiName, handle, buf);
+    else
+        qDebug("GetModuleHandle(\"%s\"): NULL", dll->asciiName);
   #endif
     return handle;
 }
@@ -119,7 +122,10 @@ static HINSTANCE LoadLibrary_(Dll* dll)
   #ifndef QT_NO_DEBUG
     char buf[MAX_PATH] = {0};
     GetModuleFileNameA(handle, buf, sizeof(buf));
-    qDebug("LoadLibrary(\"%s\"): %p, %s", dll->asciiName, handle, buf);
+    if (handle)
+        qDebug("LoadLibrary(\"%s\"): %p, %s", dll->asciiName, handle, buf);
+    else
+        qDebug("LoadLibrary(\"%s\"): NULL", dll->asciiName);
   #endif
     return handle;
 }
@@ -128,7 +134,10 @@ static FARPROC GetProcAddress_(Dll* dll, LPCSTR lpProcName)
 {
     FARPROC ptr = GetProcAddress(dll->handle, lpProcName);
   #ifndef QT_NO_DEBUG
-    qDebug("%s: GetProcAddress(\"%s\"): %p", dll->asciiName, lpProcName, (void*)ptr);
+    if (ptr)
+        qDebug("%s: GetProcAddress(\"%s\"): %p", dll->asciiName, lpProcName, (void*)ptr);
+    else
+        qDebug("%s: GetProcAddress(\"%s\"): NULL", dll->asciiName, lpProcName);
   #endif
     return ptr;
 }
