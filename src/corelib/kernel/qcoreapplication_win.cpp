@@ -222,7 +222,8 @@ void qWinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdParam,
 
     HINSTANCE hGdi32 = GetModuleHandle(TEXT("gdi32"));
     if (hGdi32) {
-        pfnCreateDIBSection = (PFNCREATEDIBSECTION)GetProcAddress(hGdi32, "CreateDIBSection");
+        if (!isWin32s())
+            pfnCreateDIBSection = (PFNCREATEDIBSECTION)GetProcAddress(hGdi32, "CreateDIBSection");
         pfnGetTextCharsetInfo = (PFNGETTEXTCHARSETINFO)GetProcAddress(hGdi32, "GetTextCharsetInfo");
         pfnEnumFontFamiliesExA = (PFNENUMFONTFAMILIESEXA)GetProcAddress9x(hGdi32, "EnumFontFamiliesExA");
         pfnEnumFontFamiliesExW = (PFNENUMFONTFAMILIESEXW)GetProcAddressNT(hGdi32, "EnumFontFamiliesExW");
@@ -241,12 +242,23 @@ void qWinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdParam,
         pfnCoUninitialize = (PFNCOUNINITIALIZE)GetProcAddress(hOle32, "CoUninitialize");
         pfnCoGetMalloc = (PFNCOGETMALLOC)GetProcAddress(hOle32, "CoGetMalloc");
         pfnCoTaskMemFree = (PFNCOTASKMEMFREE)GetProcAddress(hOle32, "CoTaskMemFree");
+        pfnCoCreateGuid = (PFNCOCREATEGUID)GetProcAddress(hOle32, "CoCreateGuid");
         pfnCoCreateInstance = (PFNCOCREATEINSTANCE)GetProcAddress(hOle32, "CoCreateInstance");
         pfnCoLockObjectExternal = (PFNCOLOCKOBJECTEXTERNAL)GetProcAddress(hOle32, "CoLockObjectExternal");
         pfnReleaseStgMedium = (PFNRELEASESTGMEDIUM)GetProcAddress(hOle32, "ReleaseStgMedium");
+        pfnStringFromGUID2 = (PFNSTRINGFROMGUID2)GetProcAddress(hOle32, "StringFromGUID2");
         pfnRegisterDragDrop = (PFNREGISTERDRAGDROP)GetProcAddress(hOle32, "RegisterDragDrop");
         pfnDoDragDrop = (PFNDODRAGDROP)GetProcAddress(hOle32, "DoDragDrop");
         pfnRevokeDragDrop = (PFNREVOKEDRAGDROP)GetProcAddress(hOle32, "RevokeDragDrop");
+    }
+
+    if (!hOle32) {
+        HINSTANCE hRpCrt4 = LoadLibrary(TEXT("rpcrt4"));
+        if (hRpCrt4) {
+            pfnUuidCreate = (PFNUUIDCREATE)GetProcAddress(hRpCrt4, "UuidCreate");
+            pfnUuidToStringW = (PFNUUIDTOSTRINGW)GetProcAddress(hRpCrt4, "UuidToStringW");
+            pfnRpcStringFreeW = (PFNRPCSTRINGFREEW)GetProcAddress(hRpCrt4, "RpcStringFreeW");
+        }
     }
 }
 

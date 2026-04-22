@@ -103,7 +103,7 @@ set_target_properties(qt PROPERTIES
 target_link_libraries(qt PUBLIC ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT})
 if(WIN32)
     set_target_properties(qt PROPERTIES PREFIX "")
-    target_link_libraries(qt PUBLIC rpcrt4 winmm)
+    target_link_libraries(qt PUBLIC winmm)
     if(NOT OLD_WINDOWS)
         target_link_libraries(qt PUBLIC opengl32 glu32 ws2_32 imm32)
     endif()

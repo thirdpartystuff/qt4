@@ -21,7 +21,7 @@
 **
 ****************************************************************************/
 
-#include <windows.h>
+#include <qt_windows.h>
 
 #include "qmutex.h"
 #include <qatomic.h>
@@ -29,11 +29,10 @@
 
 QMutexPrivate::QMutexPrivate(QMutex::RecursionMode mode)
     : lock(0), owner(0), count(0), recursive(mode == QMutex::Recursive),
-      event(QT_WA_INLINE(CreateEventW(0, false, false, 0),
-                         CreateEventA(0, false, false, 0)))
+      event(isWinNT() ? CreateEventW(0, false, false, 0) : CreateEventA(0, false, false, 0))
 {
-    if (!event)
-        qWarning("QMutexPrivate::QMutexPrivate(): Creating event failed");
+    //if (!event)
+    //    qWarning("QMutexPrivate::QMutexPrivate(): Creating event failed");
 }
 
 QMutexPrivate::~QMutexPrivate()

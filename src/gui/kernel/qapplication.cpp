@@ -3353,18 +3353,27 @@ QSessionManager::QSessionManager(QApplication * app, QString &id, QString &key)
     setObjectName("qt_sessionmanager");
     qt_session_manager_self = this;
 #if defined(Q_WS_WIN) && !defined(Q_OS_TEMP)
-    //wchar_t guidstr[40];
     GUID guid;
-    UuidCreate(&guid);
-    //StringFromGUID2(guid, guidstr, 40);
-    unsigned short* guidstr = NULL;
-    UuidToStringW(&guid, &guidstr);
-    id = QString::fromUtf16((ushort*)guidstr);
-    RpcStringFreeW(&guidstr);
-    UuidCreate(&guid);
-    UuidToStringW(&guid, &guidstr);
-    key = QString::fromUtf16((ushort*)guidstr);
-    RpcStringFreeW(&guidstr);
+    if (pfnCoCreateGuid && pfnStringFromGUID2) {
+        wchar_t guidstr[40];
+        pfnCoCreateGuid(&guid);
+        pfnStringFromGUID2(guid, guidstr, 40);
+        id = QString::fromUtf16((ushort*)guidstr);
+        pfnCoCreateGuid(&guid);
+        pfnStringFromGUID2(guid, guidstr, 40);
+        key = QString::fromUtf16((ushort*)guidstr);
+    } else if (pfnUuidCreate && pfnUuidToStringW && pfnRpcStringFreeW) {
+        WCHAR* guidstr = NULL;
+        pfnUuidCreate(&guid);
+        pfnUuidToStringW(&guid, &guidstr);
+        id = QString::fromUtf16((ushort*)guidstr);
+        pfnRpcStringFreeW(&guidstr);
+        pfnUuidCreate(&guid);
+        pfnUuidToStringW(&guid, &guidstr);
+        key = QString::fromUtf16((ushort*)guidstr);
+        pfnRpcStringFreeW(&guidstr);
+    } else
+        DebugBreak();
 #endif
     d->sessionId = id;
     d->sessionKey = key;

@@ -52,12 +52,18 @@ PFNCOINITIALIZE pfnCoInitialize;
 PFNCOUNINITIALIZE pfnCoUninitialize;
 PFNCOGETMALLOC pfnCoGetMalloc;
 PFNCOTASKMEMFREE pfnCoTaskMemFree;
+PFNCOCREATEGUID pfnCoCreateGuid;
 PFNCOCREATEINSTANCE pfnCoCreateInstance;
 PFNCOLOCKOBJECTEXTERNAL pfnCoLockObjectExternal;
 PFNRELEASESTGMEDIUM pfnReleaseStgMedium;
+PFNSTRINGFROMGUID2 pfnStringFromGUID2;
 PFNREGISTERDRAGDROP pfnRegisterDragDrop;
 PFNDODRAGDROP pfnDoDragDrop;
 PFNREVOKEDRAGDROP pfnRevokeDragDrop;
+PFNUUIDCREATE pfnUuidCreate;
+PFNUUIDTOSTRINGW pfnUuidToStringW;
+PFNRPCSTRINGFREEW pfnRpcStringFreeW;
+bool isWin32s(void) { return QSysInfo::WindowsVersion == QSysInfo::WV_32s; }
 bool isWin9x(void) { return ((QSysInfo::WindowsVersion & QSysInfo::WV_DOS_based) != 0); }
 bool isWinNT(void) { return ((QSysInfo::WindowsVersion & QSysInfo::WV_DOS_based) == 0); }
 #endif

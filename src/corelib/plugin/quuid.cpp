@@ -390,10 +390,16 @@ bool QUuid::operator>(const QUuid &other) const
 */
 #if defined(Q_OS_WIN32)
 #include <objbase.h> // For CoCreateGuid
+#include <qt_windows.h>
 QUuid QUuid::createUuid()
 {
     GUID guid;
-    UuidCreate(&guid);
+    if (pfnCoCreateGuid)
+        pfnCoCreateGuid(&guid);
+    else if (pfnUuidCreate)
+        pfnUuidCreate(&guid);
+    else
+        DebugBreak();
     QUuid result = guid;
     return result;
 }

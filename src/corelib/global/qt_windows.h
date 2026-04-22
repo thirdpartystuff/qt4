@@ -90,6 +90,7 @@
 extern "C" {
 #endif
 
+bool isWin32s(void);
 bool isWin9x(void);
 bool isWinNT(void);
 
@@ -123,6 +124,7 @@ typedef HRESULT (WINAPI* PFNCOINITIALIZE)(LPVOID pvReserved);
 typedef void (WINAPI* PFNCOUNINITIALIZE)(void);
 typedef HRESULT (WINAPI* PFNCOGETMALLOC)(DWORD dwMemContext, LPMALLOC* ppMalloc);
 typedef void (WINAPI* PFNCOTASKMEMFREE)(LPVOID pv);
+typedef HRESULT (WINAPI* PFNCOCREATEGUID)(GUID*);
 typedef HRESULT (WINAPI* PFNCOCREATEINSTANCE)(REFCLSID, LPUNKNOWN, DWORD, REFIID, LPVOID*);
 typedef HRESULT (WINAPI* PFNCOLOCKOBJECTEXTERNAL)(LPUNKNOWN pUnk, BOOL fLock, BOOL fLastUnlockReleases);
 typedef void (WINAPI* PFNRELEASESTGMEDIUM)(LPSTGMEDIUM unnamedParam1);
@@ -131,17 +133,28 @@ extern PFNCOINITIALIZE pfnCoInitialize;
 extern PFNCOUNINITIALIZE pfnCoUninitialize;
 extern PFNCOGETMALLOC pfnCoGetMalloc;
 extern PFNCOTASKMEMFREE pfnCoTaskMemFree;
+extern PFNCOCREATEGUID pfnCoCreateGuid;
 extern PFNCOCREATEINSTANCE pfnCoCreateInstance;
 extern PFNCOLOCKOBJECTEXTERNAL pfnCoLockObjectExternal;
 extern PFNRELEASESTGMEDIUM pfnReleaseStgMedium;
 
+typedef int (WINAPI* PFNSTRINGFROMGUID2)(REFGUID rguid, LPOLESTR lpsz, int cchMax);
 typedef HRESULT (WINAPI* PFNREGISTERDRAGDROP)(HWND hwnd, LPDROPTARGET pDropTarget);
 typedef HRESULT (WINAPI* PFNDODRAGDROP)(LPDATAOBJECT pDataObj, LPDROPSOURCE pDropSource, DWORD dwOKEffects, LPDWORD pdwEffect);
 typedef HRESULT (WINAPI* PFNREVOKEDRAGDROP)(HWND hwnd);
 
+extern PFNSTRINGFROMGUID2 pfnStringFromGUID2;
 extern PFNREGISTERDRAGDROP pfnRegisterDragDrop;
 extern PFNDODRAGDROP pfnDoDragDrop;
 extern PFNREVOKEDRAGDROP pfnRevokeDragDrop;
+
+typedef RPC_STATUS (WINAPI* PFNUUIDCREATE)(UUID*);
+typedef RPC_STATUS (WINAPI* PFNUUIDTOSTRINGW)(const UUID*, WCHAR**);
+typedef RPC_STATUS (WINAPI* PFNRPCSTRINGFREEW)(WCHAR**);
+
+extern PFNUUIDCREATE pfnUuidCreate;
+extern PFNUUIDTOSTRINGW pfnUuidToStringW;
+extern PFNRPCSTRINGFREEW pfnRpcStringFreeW;
 
 #ifdef __cplusplus
 }
