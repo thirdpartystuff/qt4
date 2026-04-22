@@ -100,6 +100,7 @@ static Dll user32   = { "USER32",   TEXT("USER32"),   NULL };
 static Dll gdi32    = { "GDI32",    TEXT("GDI32"),    NULL };
 static Dll ole32    = { "OLE32",    TEXT("OLE32"),    NULL };
 static Dll rpcrt4   = { "RPCRT4",   TEXT("RPCRT4"),   NULL };
+static Dll shell32   ={ "SHELL32",  TEXT("SHELL32"),  NULL };
 static Dll imm32    = { "IMM32",    TEXT("IMM32"),    NULL };
 
 static HINSTANCE GetModuleHandle_(Dll* dll)
@@ -299,6 +300,14 @@ void qWinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdParam,
         pfnUuidCreate = (PFNUUIDCREATE)GetProcAddress_(&rpcrt4, "UuidCreate");
         pfnUuidToStringW = (PFNUUIDTOSTRINGW)GetProcAddress_(&rpcrt4, "UuidToStringW");
         pfnRpcStringFreeW = (PFNRPCSTRINGFREEW)GetProcAddress_(&rpcrt4, "RpcStringFreeW");
+    }
+
+    if (LoadLibrary_(&shell32)) {
+        pfnSHGetMalloc = (PFNSHGETMALLOC)GetProcAddress_(&shell32, "SHGetMalloc");
+        pfnSHGetPathFromIDListA = (PFNSHGETPATHFROMIDLISTA)GetProcAddressA(&shell32, "SHGetPathFromIDListA");
+        pfnSHGetPathFromIDListW = (PFNSHGETPATHFROMIDLISTW)GetProcAddressW(&shell32, "SHGetPathFromIDListW");
+        pfnSHBrowseForFolderA = (PFNSHBROWSEFORFOLDERA)GetProcAddressA(&shell32, "SHBrowseForFolderA");
+        pfnSHBrowseForFolderW = (PFNSHBROWSEFORFOLDERW)GetProcAddressW(&shell32, "SHBrowseForFolderW");
     }
 
     if (!isWin32s() && LoadLibrary_(&imm32)) {

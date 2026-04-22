@@ -2108,7 +2108,8 @@ QString QFileDialog::getExistingDirectory(QWidget *parent,
     args.options = options;
 
 #if defined(Q_WS_WIN)
-    if (qt_use_native_dialogs && !(args.options & DontUseNativeDialog) && (options & ShowDirsOnly)) {
+    if (qt_use_native_dialogs && !(args.options & DontUseNativeDialog) && (options & ShowDirsOnly)
+            && ((pfnSHBrowseForFolderA && pfnSHGetPathFromIDListA) || (pfnSHBrowseForFolderW && pfnSHGetPathFromIDListW))) {
         args.directory = QFileDialogPrivate::workingDirectory(dir, false);
         return qt_win_get_existing_directory(args);
     }
