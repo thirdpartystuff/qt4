@@ -37,6 +37,11 @@
 
 #ifdef _WIN32
 #include <qt_windows.h>
+PFNCREATEDIBSECTION pfnCreateDIBSection;
+PFNGETTEXTCHARSETINFO pfnGetTextCharsetInfo;
+PFNENUMFONTFAMILIESEXA pfnEnumFontFamiliesExA;
+PFNENUMFONTFAMILIESEXW pfnEnumFontFamiliesExW;
+PFNTRANSLATECHARSETINFO pfnTranslateCharsetInfo;
 PFNOLEINITIALIZE pfnOleInitialize;
 PFNOLEUNINITIALIZE pfnOleUninitialize;
 PFNOLEGETCLIPBOARD pfnOleGetClipboard;
@@ -53,6 +58,8 @@ PFNRELEASESTGMEDIUM pfnReleaseStgMedium;
 PFNREGISTERDRAGDROP pfnRegisterDragDrop;
 PFNDODRAGDROP pfnDoDragDrop;
 PFNREVOKEDRAGDROP pfnRevokeDragDrop;
+bool isWin9x(void) { return ((QSysInfo::WindowsVersion & QSysInfo::WV_DOS_based) != 0); }
+bool isWinNT(void) { return ((QSysInfo::WindowsVersion & QSysInfo::WV_DOS_based) == 0); }
 #endif
 
 /*!

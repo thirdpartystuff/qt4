@@ -27,7 +27,7 @@
 class QFontEngineWin : public QFontEngine
 {
 public:
-    QFontEngineWin(const QString &name, HFONT, bool, LOGFONT);
+    QFontEngineWin(const QString &name, HFONT, bool, LOGFONTW);
     ~QFontEngineWin();
 
     FECaps capabilites() const;

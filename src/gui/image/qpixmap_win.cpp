@@ -92,11 +92,6 @@ QPixmap QPixmap::grabWindow(WId winId, int x, int y, int w, int h )
     \sa fromWinHBITMAP(), toWinHBITMAP()
 */
 
-#ifdef _WIN32
-typedef HBITMAP (WINAPI* PFNCREATEDIBSECTION)(HDC, const BITMAPINFO*, UINT, VOID**, HANDLE, DWORD);
-PFNCREATEDIBSECTION g_pfnCreateDIBSection = (PFNCREATEDIBSECTION)GetProcAddress(GetModuleHandleA("gdi32"), "CreateDIBSection");
-#endif
-
 /*!
     Creates a \c HBITMAP equivalent to the QPixmap, based on the
     given \a format, and returns the \c HBITMAP handle.
@@ -128,11 +123,15 @@ HBITMAP QPixmap::toWinHBITMAP(HBitmapFormat format) const
 
     // Create the pixmap
     uchar *pixels = 0;
-    HBITMAP bitmap = CreateDIBSection(display_dc, &bmi, DIB_RGB_COLORS, (void **) &pixels, 0, 0);
-    if (!bitmap) {
-        qErrnoWarning("QPixmap::toWinHBITMAP(), failed to create dibsection");
-        return 0;
-    }
+    HBITMAP bitmap;
+    if (pfnCreateDIBSection) {
+        bitmap = pfnCreateDIBSection(display_dc, &bmi, DIB_RGB_COLORS, (void **) &pixels, 0, 0);
+        if (!bitmap) {
+            qErrnoWarning("QPixmap::toWinHBITMAP(), failed to create dibsection");
+            return 0;
+        }
+    } else
+        pixels = new uchar[w * h * 4];
     if (!pixels) {
         qErrnoWarning("QPixmap::toWinHBITMAP(), did not allocate pixel data");
         return 0;
@@ -146,6 +145,16 @@ HBITMAP QPixmap::toWinHBITMAP(HBitmapFormat format) const
     int bytes_per_line = w * 4;
     for (int y=0; y<h; ++y)
         memcpy(pixels + y * bytes_per_line, image.scanLine(y), bytes_per_line);
+
+    if (!pfnCreateDIBSection) {
+        bitmap = CreateDIBitmap(display_dc, &bmi.bmiHeader, CBM_INIT, pixels, &bmi, DIB_RGB_COLORS);
+        if (!bitmap) {
+            qErrnoWarning("QPixmap::toWinHBITMAP(), failed to create dibsection");
+            delete[] pixels;
+            return 0;
+        }
+        delete[] pixels;
+    }
 
     return bitmap;
 }

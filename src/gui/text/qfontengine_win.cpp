@@ -203,7 +203,7 @@ int QFontEngine::getGlyphIndexes(const QChar *str, int numChars, QGlyphLayout *g
 }
 
 
-QFontEngineWin::QFontEngineWin(const QString &name, HFONT _hfont, bool stockFont, LOGFONT lf)
+QFontEngineWin::QFontEngineWin(const QString &name, HFONT _hfont, bool stockFont, LOGFONTW lf)
 {
     //qDebug("regular windows font engine created: font='%s', size=%d", name, lf.lfHeight);
 
@@ -259,9 +259,9 @@ QFontEngine::FECaps QFontEngineWin::capabilites() const
 
 HGDIOBJ QFontEngineWin::selectDesignFont(float *overhang) const
 {
-    LOGFONT f = logfont;
+    LOGFONTW f = logfont;
     f.lfHeight = unitsPerEm;
-    HFONT designFont = CreateFontIndirect(&f);
+    HFONT designFont = (isWinNT() ? CreateFontIndirectW(&f) : CreateFontIndirectA((LOGFONT*)&f));
     HGDIOBJ oldFont = SelectObject(shared_dc, designFont);
 
     if (QSysInfo::WindowsVersion & QSysInfo::WV_DOS_based) {
@@ -771,18 +771,18 @@ void QFontEngineMultiWin::loadEngine(int at)
 
     QString fam = fallbacks.at(at-1);
 
-    LOGFONT lf = engines.at(0)->logfont;
+    LOGFONTW lf = engines.at(0)->logfont;
     HFONT hfont;
-    QT_WA({
-        memcpy(lf.lfFaceName, fam.utf16(), sizeof(TCHAR)*qMin(fam.length()+1,32));  // 32 = Windows hard-coded
-        hfont = CreateFontIndirect(&lf);
-    } , {
+    if (isWinNT()) {
+        memcpy(lf.lfFaceName, fam.utf16(), sizeof(WCHAR)*qMin(fam.length()+1,32));  // 32 = Windows hard-coded
+        hfont = CreateFontIndirectW(&lf);
+    } else {
         // LOGFONTA and LOGFONTW are binary compatible
         QByteArray lname = fam.toLocal8Bit();
         memcpy(lf.lfFaceName,lname.data(),
             qMin(lname.length()+1,32));  // 32 = Windows hard-coded
         hfont = CreateFontIndirectA((LOGFONTA*)&lf);
-    });
+    }
     bool stockFont = false;
     if (hfont == 0) {
         hfont = (HFONT)GetStockObject(ANSI_VAR_FONT);

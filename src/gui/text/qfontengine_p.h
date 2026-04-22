@@ -145,7 +145,7 @@ public:
 
     QString        _name;
     HFONT        hfont;
-    LOGFONT     logfont;
+    LOGFONTW    logfont;
     uint        stockFont   : 1;
     uint        useTextOutA : 1;
     uint        ttf         : 1;

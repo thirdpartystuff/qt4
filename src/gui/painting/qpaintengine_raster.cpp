@@ -63,10 +63,6 @@
 #  include <malloc.h>
 #endif
 
-#ifdef _WIN32
-typedef HBITMAP (WINAPI* PFNCREATEDIBSECTION)(HDC, const BITMAPINFO*, UINT, VOID**, HANDLE, DWORD);
-extern PFNCREATEDIBSECTION g_pfnCreateDIBSection;
-#endif
 
 
 /*
@@ -2989,7 +2985,7 @@ static void draw_text_item_win(const QPointF &pos, const QTextItemInt &ti, HDC h
     }
 
     if (ti.flags & (QTextItem::Underline|QTextItem::StrikeOut) || scale != 1. || angle) {
-        LOGFONT lf = fe->logfont;
+        LOGFONTW lf = fe->logfont;
         lf.lfUnderline = (ti.flags & QTextItem::Underline);
         lf.lfStrikeOut = (ti.flags & QTextItem::StrikeOut);
         if (angle) {
@@ -3000,7 +2996,7 @@ static void draw_text_item_win(const QPointF &pos, const QTextItemInt &ti, HDC h
             lf.lfHeight = (int) (lf.lfHeight*scale);
             lf.lfWidth = (int) (lf.lfWidth*scale);
         }
-        HFONT hf = QT_WA_INLINE(CreateFontIndirectW(&lf), CreateFontIndirectA((LOGFONTA*)&lf));
+        HFONT hf = (isWinNT() ? CreateFontIndirectW(&lf) : CreateFontIndirectA((LOGFONTA*)&lf));
         SelectObject(hdc, hf);
     } else {
         SelectObject(hdc, fe->hfont);

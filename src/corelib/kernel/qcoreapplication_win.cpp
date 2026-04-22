@@ -100,6 +100,29 @@ Q_CORE_EXPORT void qWinMsgHandler(QtMsgType t, const char* str)
     staticMutex.unlock();
 }
 
+bool isWin9x(void)
+{
+    return ((QSysInfo::WindowsVersion & QSysInfo::WV_DOS_based) != 0);
+}
+
+bool isWinNT(void)
+{
+    return ((QSysInfo::WindowsVersion & QSysInfo::WV_DOS_based) == 0);
+}
+
+static FARPROC GetProcAddress9x(HINSTANCE hModule, LPCSTR lpProcName)
+{
+    if (!isWin9x())
+        return NULL;
+    return GetProcAddress(hModule, lpProcName);
+}
+
+static FARPROC GetProcAddressNT(HINSTANCE hModule, LPCSTR lpProcName)
+{
+    if (!isWinNT())
+        return NULL;
+    return GetProcAddress(hModule, lpProcName);
+}
 
 /*****************************************************************************
   qWinMain() - Initializes Windows. Called from WinMain() in qtmain_win.cpp
@@ -196,6 +219,15 @@ void qWinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdParam,
                   QString::fromUtf16(uniqueAppID)
                   .lower().remove('\\').utf16());
 #endif
+
+    HINSTANCE hGdi32 = GetModuleHandle(TEXT("gdi32"));
+    if (hGdi32) {
+        pfnCreateDIBSection = (PFNCREATEDIBSECTION)GetProcAddress(hGdi32, "CreateDIBSection");
+        pfnGetTextCharsetInfo = (PFNGETTEXTCHARSETINFO)GetProcAddress(hGdi32, "GetTextCharsetInfo");
+        pfnEnumFontFamiliesExA = (PFNENUMFONTFAMILIESEXA)GetProcAddress9x(hGdi32, "EnumFontFamiliesExA");
+        pfnEnumFontFamiliesExW = (PFNENUMFONTFAMILIESEXW)GetProcAddressNT(hGdi32, "EnumFontFamiliesExW");
+        pfnTranslateCharsetInfo = (PFNTRANSLATECHARSETINFO)GetProcAddress(hGdi32, "TranslateCharsetInfo");
+    }
 
     HINSTANCE hOle32 = LoadLibrary(TEXT("ole32"));
     if (hOle32) {
