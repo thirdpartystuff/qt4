@@ -296,14 +296,14 @@ void QWidgetPrivate::create_sys(WId window, bool initializeWindow, bool destroyO
             style = WS_OVERLAPPED;
 #ifndef Q_OS_TEMP
             if (type == Qt::Dialog)
-                flags |= Qt::WindowSystemMenuHint | Qt::WindowTitleHint | Qt::WindowContextHelpButtonHint;
+                flags |= Qt::WindowSystemMenuHint | Qt::WindowTitleHint;// | Qt::WindowContextHelpButtonHint;
             else if (type == Qt::Tool)
                 flags |= Qt::WindowSystemMenuHint | Qt::WindowTitleHint;
             else
                 flags |= Qt::WindowSystemMenuHint | Qt::WindowTitleHint | Qt::WindowMinMaxButtonsHint;
 #else
             if (type == Qt::Dialog)
-                flags |= Qt::WindowSystemMenuHint | Qt::WindowTitleHint | Qt::WindowContextHelpButtonHint;
+                flags |= Qt::WindowSystemMenuHint | Qt::WindowTitleHint;// | Qt::WindowContextHelpButtonHint;
             else if (type == Qt::Tool)
                 flags |= Qt::WindowSystemMenuHint | Qt::WindowTitleHint;
             else

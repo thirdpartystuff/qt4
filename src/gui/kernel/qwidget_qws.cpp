@@ -162,7 +162,7 @@ void QWidgetPrivate::create_sys(WId window, bool initializeWindow, bool /*destro
         } else if (customize) {
             hasFrame = !(flags & Qt::FramelessWindowHint);
         } else if (dialog) {
-            flags |= Qt::WindowSystemMenuHint | Qt::WindowTitleHint | Qt::WindowContextHelpButtonHint;
+            flags |= Qt::WindowSystemMenuHint | Qt::WindowTitleHint;// | Qt::WindowContextHelpButtonHint;
         } else {
             flags |= Qt::WindowSystemMenuHint | Qt::WindowTitleHint | Qt::WindowMinMaxButtonsHint;
         }

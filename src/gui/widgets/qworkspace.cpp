@@ -1052,7 +1052,7 @@ QWidget * QWorkspace::addWindow(QWidget *w, Qt::WFlags flags)
     if (customize)
         ;
     else if (type == Qt::Dialog || type == Qt::Sheet)
-        flags |= Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowContextHelpButtonHint;
+        flags |= Qt::WindowTitleHint | Qt::WindowSystemMenuHint;// | Qt::WindowContextHelpButtonHint;
     else if (type == Qt::Tool)
         flags |= Qt::WindowTitleHint | Qt::WindowSystemMenuHint;
     else

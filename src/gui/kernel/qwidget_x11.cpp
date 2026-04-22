@@ -490,7 +490,7 @@ void QWidgetPrivate::create_sys(WId window, bool initializeWindow, bool destroyO
             }
         } else if (desktop || popup) {
         } else if (dialog) {
-            flags |= Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowContextHelpButtonHint;
+            flags |= Qt::WindowTitleHint | Qt::WindowSystemMenuHint;// | Qt::WindowContextHelpButtonHint;
         } else if (type == Qt::SplashScreen) {
             if (qt_net_supports(ATOM(_NET_WM_WINDOW_TYPE_SPLASH))) {
                 flags &= ~Qt::X11BypassWindowManagerHint;
