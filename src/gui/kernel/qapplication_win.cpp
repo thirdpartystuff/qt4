@@ -368,40 +368,43 @@ static void qt_show_system_menu(QWidget* tlw)
 #endif
 }
 
-extern QFont qt_LOGFONTtoQFont(LOGFONT& lf,bool scale);
+extern QFont qt_LOGFONTtoQFont(LOGFONT& lf,bool scale,char api);
 
 static void qt_set_windows_resources()
 {
     if (QApplication::type() != QApplication::Tty)
         (void) QApplication::style(); // trigger creation of application style
-#ifndef Q_OS_TEMP
+
     QFont menuFont;
     QFont messageFont;
     QFont statusFont;
     QFont titleFont;
     QFont smallTitleFont;
 
-    QT_WA({
-        NONCLIENTMETRICS ncm;
+    if (useWide()) {
+        NONCLIENTMETRICSW ncm;
         ncm.cbSize = sizeof(ncm);
-        SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(ncm), &ncm, 0);
-        menuFont = qt_LOGFONTtoQFont(ncm.lfMenuFont,true);
-        messageFont = qt_LOGFONTtoQFont(ncm.lfMessageFont,true);
-        statusFont = qt_LOGFONTtoQFont(ncm.lfStatusFont,true);
-        titleFont = qt_LOGFONTtoQFont(ncm.lfCaptionFont,true);
-        smallTitleFont = qt_LOGFONTtoQFont(ncm.lfSmCaptionFont,true);
-    } , {
+        if (!SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(ncm), &ncm, 0)) goto simple;
+        menuFont = qt_LOGFONTtoQFont((LOGFONT&)ncm.lfMenuFont,true,'W');
+        messageFont = qt_LOGFONTtoQFont((LOGFONT&)ncm.lfMessageFont,true,'W');
+        statusFont = qt_LOGFONTtoQFont((LOGFONT&)ncm.lfStatusFont,true,'W');
+        titleFont = qt_LOGFONTtoQFont((LOGFONT&)ncm.lfCaptionFont,true,'W');
+        smallTitleFont = qt_LOGFONTtoQFont((LOGFONT&)ncm.lfSmCaptionFont,true,'W');
+    } else {
         // A version
         NONCLIENTMETRICSA ncm;
         ncm.cbSize = sizeof(ncm);
-        SystemParametersInfoA(SPI_GETNONCLIENTMETRICS, sizeof(ncm), &ncm, 0);
-        menuFont = qt_LOGFONTtoQFont((LOGFONT&)ncm.lfMenuFont,true);
-        messageFont = qt_LOGFONTtoQFont((LOGFONT&)ncm.lfMessageFont,true);
-        statusFont = qt_LOGFONTtoQFont((LOGFONT&)ncm.lfStatusFont,true);
-        titleFont = qt_LOGFONTtoQFont((LOGFONT&)ncm.lfCaptionFont,true);
-        smallTitleFont = qt_LOGFONTtoQFont((LOGFONT&)ncm.lfSmCaptionFont,true);
-    });
+        if (!SystemParametersInfoA(SPI_GETNONCLIENTMETRICS, sizeof(ncm), &ncm, 0)) goto simple;
+        menuFont = qt_LOGFONTtoQFont((LOGFONT&)ncm.lfMenuFont,true,'A');
+        messageFont = qt_LOGFONTtoQFont((LOGFONT&)ncm.lfMessageFont,true,'A');
+        statusFont = qt_LOGFONTtoQFont((LOGFONT&)ncm.lfStatusFont,true,'A');
+        titleFont = qt_LOGFONTtoQFont((LOGFONT&)ncm.lfCaptionFont,true,'A');
+        smallTitleFont = qt_LOGFONTtoQFont((LOGFONT&)ncm.lfSmCaptionFont,true,'A');
+    }
 
+   #ifndef QT_NO_DEBUG
+    qDebug("note: Using SPI_GETNONCLIENTMETRICS for fonts.");
+   #endif
     QApplication::setFont(menuFont, "QMenu");
     QApplication::setFont(menuFont, "QMenuBar");
     QApplication::setFont(messageFont, "QMessageBox");
@@ -409,12 +412,17 @@ static void qt_set_windows_resources()
     QApplication::setFont(statusFont, "QStatusBar");
     QApplication::setFont(titleFont, "QTitleBar");
     QApplication::setFont(smallTitleFont, "QDockWidgetTitle");
-#else
-    LOGFONT lf;
+
+  goto done;
+  simple: {
+   #ifndef QT_NO_DEBUG
+    qDebug("note: SPI_GETNONCLIENTMETRICS is not available, using SYSTEM_FONT.");
+   #endif
+    LOGFONTA lf;
     HGDIOBJ stockFont = GetStockObject(SYSTEM_FONT);
-    GetObject(stockFont, sizeof(lf), &lf);
-    QApplication::setFont(qt_LOGFONTtoQFont(lf, true));
-#endif// Q_OS_TEMP
+    GetObjectA(stockFont, sizeof(lf), &lf);
+    QApplication::setFont(qt_LOGFONTtoQFont((LOGFONT&)lf, true,'A'));
+  } done:
 
     // Do the color settings
     QPalette pal;
@@ -614,15 +622,15 @@ void qt_init(QApplicationPrivate *priv, int)
     if (!qt_app_has_font) {
         HFONT hfont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
         QFont f("MS Sans Serif",8);
-        QT_WA({
-            LOGFONT lf;
-            if (GetObject(hfont, sizeof(lf), &lf))
-                f = qt_LOGFONTtoQFont((LOGFONT&)lf,true);
-        } , {
+        if (useWide()) {
+            LOGFONTW lf;
+            if (GetObjectW(hfont, sizeof(lf), &lf))
+                f = qt_LOGFONTtoQFont((LOGFONT&)lf,true,'W');
+        } else {
             LOGFONTA lf;
             if (GetObjectA(hfont, sizeof(lf), &lf))
-                f = qt_LOGFONTtoQFont((LOGFONT&)lf,true);
-        });
+                f = qt_LOGFONTtoQFont((LOGFONT&)lf,true,'A');
+        }
         QApplication::setFont(f);
     }
 
@@ -631,11 +639,11 @@ void qt_init(QApplicationPrivate *priv, int)
     if (QApplication::desktopSettingsAware())
         qt_set_windows_resources();
 
-    QT_WA({
-        WM95_MOUSEWHEEL = RegisterWindowMessage(L"MSWHEEL_ROLLMSG");
-    } , {
+    if (useWide()) {
+        WM95_MOUSEWHEEL = RegisterWindowMessageW(L"MSWHEEL_ROLLMSG");
+    } else {
         WM95_MOUSEWHEEL = RegisterWindowMessageA("MSWHEEL_ROLLMSG");
-    });
+    }
     initWinTabFunctions();
     QApplicationPrivate::inputContext = new QWinInputContext(0);
 }
