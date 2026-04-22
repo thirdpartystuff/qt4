@@ -1224,7 +1224,7 @@ QVariant QClipboardWatcher::retrieveData_sys(const QString &fmt, QVariant::Type 
 
     Atom fmtatom = 0;
 
-    if (fmt == QLatin1String(s_text_plain)) {
+    if (fmt == s_text_plain) {
         Atom *targets = (Atom *) format_atoms.data();
         int size = format_atoms.size() / sizeof(Atom);
 
