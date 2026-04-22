@@ -2015,9 +2015,9 @@ LRESULT CALLBACK QtWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam
                         QWidget *hittest = QApplication::widgetAt(cpos);
                         dispatch = !hittest || hittest->winId() != curWin;
                     }
-                    if (!dispatch) {
+                    if (!dispatch && pfnGetWindowRgn) {
                         HRGN hrgn = CreateRectRgn(0,0,0,0);
-                        if (GetWindowRgn(curWin, hrgn) != ERROR) {
+                        if (pfnGetWindowRgn(curWin, hrgn) != ERROR) {
                             QPoint lcpos = widget->mapFromGlobal(cpos);
                             dispatch = !PtInRegion(hrgn, lcpos.x(), lcpos.y());
                         }

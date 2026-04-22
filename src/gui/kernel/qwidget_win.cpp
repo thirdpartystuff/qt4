@@ -1514,6 +1514,9 @@ void QWidget::setMask(const QRegion &region)
 
     // Since SetWindowRegion takes ownership, and we need to translate,
     // we take a copy.
+  if (!pfnSetWindowRgn)
+    qWarning("QWidget::setMask: SetWindowRgn is not supported.");
+  else {
     HRGN wr = CreateRectRgn(0,0,0,0);
     CombineRgn(wr, region.handle(), 0, RGN_COPY);
 
@@ -1523,7 +1526,8 @@ void QWidget::setMask(const QRegion &region)
         fleft = d->topData()->fleft;
     }
     OffsetRgn(wr, fleft, ftop);
-    SetWindowRgn(winId(), wr, true);
+    pfnSetWindowRgn(winId(), wr, true);
+  }
 }
 
 void QWidget::setMask(const QBitmap &bitmap)
@@ -1538,7 +1542,7 @@ void QWidget::clearMask()
     d->createExtra();
     if(QWExtra *extra = d->extraData())
         extra->mask = QRegion();
-    SetWindowRgn(winId(), 0, true);
+    if (pfnSetWindowRgn) pfnSetWindowRgn(winId(), 0, true);
 }
 
 void QWidgetPrivate::updateFrameStrut() const

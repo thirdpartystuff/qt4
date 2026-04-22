@@ -265,6 +265,8 @@ void qWinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdParam,
     }
 
     if (GetModuleHandle_(&user32)) {
+        pfnGetWindowRgn = (PFNGETWINDOWRGN)GetProcAddress_(&user32, "GetWindowRgn");
+        pfnSetWindowRgn = (PFNSETWINDOWRGN)GetProcAddress_(&user32, "SetWindowRgn");
         pfnMsgWaitForMultipleObjectsEx = (PFNMSGWAITFORMULTIPLEOBJECTSEX)GetProcAddress_(&user32, "MsgWaitForMultipleObjectsEx");
     }
 
