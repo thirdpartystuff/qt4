@@ -404,11 +404,14 @@ bool QEventDispatcherWin32::processEvents(QEventLoop::ProcessEventsFlags flags)
                     d->queuedUserInputEvents.append(msg);
                 }
             }
-            if (!haveMessage) {
+            if (!haveMessage && !isWin32s()) {
                 // no message - check for signalled objects
                 for (int i=0; i<(int)nCount; i++)
                     pHandles[i] = d->winEventNotifierList.at(i)->handle();
-                waitRet = MsgWaitForMultipleObjectsEx(nCount, pHandles, 0, QS_ALLINPUT, MWMO_ALERTABLE);
+                if (pfnMsgWaitForMultipleObjectsEx)
+                    waitRet = pfnMsgWaitForMultipleObjectsEx(nCount, pHandles, 0, QS_ALLINPUT, MWMO_ALERTABLE);
+                else
+                    waitRet = MsgWaitForMultipleObjects(nCount, pHandles, FALSE, 0, QS_ALLINPUT);
                 if ((haveMessage = (waitRet == WAIT_OBJECT_0 + nCount))) {
                     // a new message has arrived, process it
                     continue;
@@ -450,7 +453,15 @@ bool QEventDispatcherWin32::processEvents(QEventLoop::ProcessEventsFlags flags)
                 pHandles[i] = d->winEventNotifierList.at(i)->handle();
 
             emit aboutToBlock();
-            waitRet = MsgWaitForMultipleObjectsEx(nCount, pHandles, INFINITE, QS_ALLINPUT, MWMO_ALERTABLE);
+
+            if (isWin32s()) {
+                WaitMessage();
+                continue;
+            }
+            if (pfnMsgWaitForMultipleObjectsEx)
+                waitRet = pfnMsgWaitForMultipleObjectsEx(nCount, pHandles, 0, QS_ALLINPUT, MWMO_ALERTABLE);
+            else
+                waitRet = MsgWaitForMultipleObjects(nCount, pHandles, FALSE, INFINITE, QS_ALLINPUT);
             if (waitRet >= WAIT_OBJECT_0 && waitRet < WAIT_OBJECT_0 + nCount) {
                 d->activateEventNotifier(d->winEventNotifierList.at(waitRet - WAIT_OBJECT_0));
                 retVal = true;
@@ -688,6 +699,7 @@ QEventDispatcherWin32::registeredTimers(QObject *object) const
 bool QEventDispatcherWin32::registerEventNotifier(QWinEventNotifier *notifier)
 {
     Q_D(QEventDispatcherWin32);
+    Q_ASSERT(!isWin32s());
 
     if (d->winEventNotifierList.contains(notifier))
         return true;

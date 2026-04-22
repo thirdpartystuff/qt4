@@ -96,6 +96,7 @@ Q_CORE_EXPORT void qWinMsgHandler(QtMsgType t, const char* str)
 
 struct Dll { const char* asciiName; const TCHAR* name; HINSTANCE handle; };
 static Dll kernel32 = { "KERNEL32", TEXT("KERNEL32"), NULL };
+static Dll user32   = { "USER32",   TEXT("USER32"),   NULL };
 static Dll gdi32    = { "GDI32",    TEXT("GDI32"),    NULL };
 static Dll ole32    = { "OLE32",    TEXT("OLE32"),    NULL };
 static Dll rpcrt4   = { "RPCRT4",   TEXT("RPCRT4"),   NULL };
@@ -257,6 +258,10 @@ void qWinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdParam,
         pfnGetDateFormatA = (PFNGETDATEFORMATA)GetProcAddressA(&kernel32, "GetDateFormatA");
         pfnGetTimeFormatA = (PFNGETTIMEFORMATA)GetProcAddressA(&kernel32, "GetTimeFormatA");
         pfnGetLocaleInfoA = (PFNGETLOCALEINFOA)GetProcAddressA(&kernel32, "GetLocaleInfoA");
+    }
+
+    if (GetModuleHandle_(&user32)) {
+        pfnMsgWaitForMultipleObjectsEx = (PFNMSGWAITFORMULTIPLEOBJECTSEX)GetProcAddress_(&user32, "MsgWaitForMultipleObjectsEx");
     }
 
     if (GetModuleHandle_(&gdi32)) {
