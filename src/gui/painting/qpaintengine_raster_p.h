@@ -210,11 +210,12 @@ class QRasterBuffer
 {
 public:
 #if defined(Q_WS_WIN)
-    QRasterBuffer() : m_hdc(0), m_bitmap(0), m_width(0), m_height(0), m_buffer(0) { init(); }
+    QRasterBuffer() : m_hdc(0), m_bitmap(0), m_bufferAllocated(false), m_width(0), m_height(0), m_buffer(0) { init(); }
 
     HDC hdc() const { return m_hdc; }
+    void bitBlt(HDC hDstDC, int dstX, int dstY, int cx, int cy, HDC hSrcDC, int srcX, int srcY, quint32 rop);
 #elif defined(Q_WS_X11)
-    QRasterBuffer() : m_width(0), m_height(0), m_buffer(0) { init(); }
+    QRasterBuffer() : m_bufferAllocated(false), m_width(0), m_height(0), m_buffer(0) { init(); }
 #elif defined(Q_WS_MAC)
     QRasterBuffer() : m_data(0), m_width(0), m_height(0), m_buffer(0) { init(); }
 # if defined(QMAC_NO_COREGRAPHICS)
@@ -265,6 +266,9 @@ private:
 #if defined(Q_WS_WIN)
     HDC m_hdc;
     HBITMAP m_bitmap;
+#endif
+#if defined(Q_WS_WIN) || defined(Q_WS_X11)
+    bool m_bufferAllocated;
 #endif
 
     int m_width;

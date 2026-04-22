@@ -680,14 +680,14 @@ void QRasterPaintEngine::flush(QPaintDevice *device, const QPoint &offset)
 
         QRegion sysClip = systemClip();
         if (sysClip.isEmpty()) {
-            BitBlt(hdc, d->deviceRect.x() + offset.x(), d->deviceRect.y() + offset.y(),
+            d->rasterBuffer->bitBlt(hdc, d->deviceRect.x() + offset.x(), d->deviceRect.y() + offset.y(),
                    d->deviceRect.width(), d->deviceRect.height(),
                    d->rasterBuffer->hdc(), 0, 0, SRCCOPY);
         } else {
             QVector<QRect> rects = sysClip.rects();
             for (int i=0; i<rects.size(); ++i) {
                 QRect r = rects.at(i);
-                BitBlt(hdc,
+                d->rasterBuffer->bitBlt(hdc,
                        r.x() + offset.x(), r.y() + offset.y(), r.width(), r.height(),
                        d->rasterBuffer->hdc(), r.x() - d->deviceRect.x(), r.y() - d->deviceRect.y(),
                        SRCCOPY);
@@ -2149,10 +2149,14 @@ QRasterBuffer::~QRasterBuffer()
 #if defined (Q_WS_WIN)
     if (m_bitmap || m_hdc) {
         Q_ASSERT(m_hdc);
-        Q_ASSERT(m_bitmap);
         DeleteDC(m_hdc);
-        DeleteObject(m_bitmap);
+        if (m_bitmap) DeleteObject(m_bitmap);
     }
+#endif
+
+#if defined (Q_WS_WIN) || defined(Q_WS_X11)
+    if (m_bufferAllocated)
+        delete[] m_buffer;
 #endif
 }
 
@@ -2184,6 +2188,7 @@ void QRasterBuffer::prepare(QImage *image)
     int depth = image->depth();
     prepareClip(image->width(), image->height());
     m_buffer = (uchar *)image->bits();
+    m_bufferAllocated = false;
     m_width = image->width();
     m_height = image->height();
     bytes_per_line = 4*(depth == 32 ? m_width : (m_width*depth + 31)/32);
@@ -2246,9 +2251,8 @@ void QRasterBuffer::prepareBuffer(int width, int height)
     // a little bit of cleanup...
     if (m_bitmap || m_hdc) {
         Q_ASSERT(m_hdc);
-        Q_ASSERT(m_bitmap);
         DeleteDC(m_hdc);
-        DeleteObject(m_bitmap);
+        if (m_bitmap) DeleteObject(m_bitmap);
     }
 
     m_hdc = CreateCompatibleDC(displayDC);
@@ -2264,12 +2268,20 @@ void QRasterBuffer::prepareBuffer(int width, int height)
 
     ReleaseDC(0, displayDC);
 }
+void QRasterBuffer::bitBlt(HDC hDstDC, int dstX, int dstY, int cx, int cy, HDC hSrcDC, int srcX, int srcY, quint32 rop)
+{
+    BitBlt(hDstDC, dstX, dstY, cx, cy, hSrcDC, srcX, srcY, rop);
+}
 #elif defined(Q_WS_X11)
 void QRasterBuffer::prepareBuffer(int width, int height)
 {
-    delete[] m_buffer;
-    m_buffer = new uchar[width*height];
+    if (m_bufferAllocated) {
+        delete[] m_buffer;
+        m_bufferAllocated = false;
+    }
+    m_buffer = new uchar[width*height*sizeof(uint)];
     memset(m_buffer, 255, width*height*sizeof(uint));
+    m_bufferAllocated = true;
 }
 #elif defined(Q_WS_MAC)
 static void qt_mac_raster_data_free(void *memory, const void *, size_t)
