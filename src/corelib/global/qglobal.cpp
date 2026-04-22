@@ -37,6 +37,10 @@
 
 #ifdef _WIN32
 #include <qt_windows.h>
+PFNCOMPARESTRINGA pfnCompareStringA;
+PFNGETDATEFORMATA pfnGetDateFormatA;
+PFNGETTIMEFORMATA pfnGetTimeFormatA;
+PFNGETLOCALEINFOA pfnGetLocaleInfoA;
 PFNCREATEDIBSECTION pfnCreateDIBSection;
 PFNGETTEXTCHARSETINFO pfnGetTextCharsetInfo;
 PFNENUMFONTFAMILIESEXA pfnEnumFontFamiliesExA;
@@ -64,8 +68,7 @@ PFNUUIDCREATE pfnUuidCreate;
 PFNUUIDTOSTRINGW pfnUuidToStringW;
 PFNRPCSTRINGFREEW pfnRpcStringFreeW;
 bool isWin32s(void) { return QSysInfo::WindowsVersion == QSysInfo::WV_32s; }
-bool isWin9x(void) { return ((QSysInfo::WindowsVersion & QSysInfo::WV_DOS_based) != 0); }
-bool isWinNT(void) { return ((QSysInfo::WindowsVersion & QSysInfo::WV_DOS_based) == 0); }
+bool useWide(void) { return ((QSysInfo::WindowsVersion & QSysInfo::WV_DOS_based) == 0); }
 #endif
 
 /*!
@@ -1418,7 +1421,7 @@ static QSysInfo::WinVersion winVersion()
 
     static QSysInfo::WinVersion winver = QSysInfo::WV_NT;
 
-    HINSTANCE hKernel32 = GetModuleHandle(TEXT("kernel32"));
+    HINSTANCE hKernel32 = GetModuleHandle(TEXT("KERNEL32"));
     PFNGETVERSIONEXW pfnGetVersionExW = (PFNGETVERSIONEXW)GetProcAddress(hKernel32, "GetVersionExW");
     PFNGETVERSIONEXA pfnGetVersionExA = (PFNGETVERSIONEXA)GetProcAddress(hKernel32, "GetVersionExA");
 
@@ -1809,7 +1812,7 @@ void qt_win_print_debug_message(const char* str)
     if (!str)
         str = "(null)";
 
-    if (isWinNT()) {
+    if (useWide()) {
         QString fstr(str);
         fstr += "\r\n";
         OutputDebugStringW((LPCWSTR)fstr.utf16());

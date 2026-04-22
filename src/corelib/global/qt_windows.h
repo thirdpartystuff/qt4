@@ -91,8 +91,17 @@ extern "C" {
 #endif
 
 bool isWin32s(void);
-bool isWin9x(void);
-bool isWinNT(void);
+bool useWide(void);
+
+typedef int (WINAPI* PFNCOMPARESTRINGA)(LCID, DWORD, LPCSTR, int, LPCSTR, int);
+typedef int (WINAPI* PFNGETDATEFORMATA)(LCID, DWORD, const SYSTEMTIME*, LPCSTR, LPSTR, int);
+typedef int (WINAPI* PFNGETTIMEFORMATA)(LCID, DWORD, const SYSTEMTIME*, LPCSTR, LPSTR, int);
+typedef int (WINAPI* PFNGETLOCALEINFOA)(LCID, LCTYPE, LPSTR, int);
+
+extern PFNCOMPARESTRINGA pfnCompareStringA;
+extern PFNGETDATEFORMATA pfnGetDateFormatA;
+extern PFNGETTIMEFORMATA pfnGetTimeFormatA;
+extern PFNGETLOCALEINFOA pfnGetLocaleInfoA;
 
 typedef HBITMAP (WINAPI* PFNCREATEDIBSECTION)(HDC, const BITMAPINFO*, UINT, VOID**, HANDLE, DWORD);
 typedef HRESULT (WINAPI* PFNENUMFONTFAMILIESEXA)(HDC, LPLOGFONTA, FONTENUMPROCA, LPARAM, DWORD);

@@ -3941,15 +3941,15 @@ int QString::localeAwareCompare(const QString &other) const
 
 #if defined(Q_OS_WIN32)
     int res;
-    QT_WA({
-        const TCHAR* s1 = (TCHAR*)utf16();
-        const TCHAR* s2 = (TCHAR*)other.utf16();
+    if (!pfnCompareStringA) {
+        const WCHAR* s1 = (WCHAR*)utf16();
+        const WCHAR* s2 = (WCHAR*)other.utf16();
         res = CompareStringW(GetThreadLocale(), 0, s1, length(), s2, other.length());
-    } , {
+    } else {
         QByteArray s1 = toLocal8Bit();
         QByteArray s2 = other.toLocal8Bit();
-        res = CompareStringA(GetThreadLocale(), 0, s1.data(), s1.length(), s2.data(), s2.length());
-    });
+        res = pfnCompareStringA(GetThreadLocale(), 0, s1.data(), s1.length(), s2.data(), s2.length());
+    }
 
     switch (res) {
     case CSTR_LESS_THAN:

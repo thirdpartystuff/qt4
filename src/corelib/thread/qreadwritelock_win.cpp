@@ -23,7 +23,7 @@
 
 #include "qreadwritelock.h"
 #include <qatomic.h>
-#include <windows.h>
+#include <qt_windows.h>
 #include "qreadwritelock_p.h"
 
 
@@ -33,13 +33,13 @@ QReadWriteLock::QReadWriteLock()
     d->accessCount = 0;
     d->waitingWriters = 0;
     d->waitingReaders = 0;
-    d->readerWait = QT_WA_INLINE(CreateEventW(0, false, false, 0),
+    d->readerWait = (useWide() ? CreateEventW(0, false, false, 0) :
                                  CreateEventA(0, false, false, 0));
-    if (!d->readerWait)
+    if (!d->readerWait && !isWin32s())
         qWarning("QReadWriteLock::QReadWriteLock(): Creating reader event failed");
-    d->writerWait = QT_WA_INLINE(CreateEventW(0, false, false, 0),
+    d->writerWait = (useWide() ? CreateEventW(0, false, false, 0) :
                                  CreateEventA(0, false, false, 0));
-    if (!d->writerWait)
+    if (!d->writerWait && !isWin32s())
         qWarning("QReadWriteLock::QReadWriteLock(): Creating writer event failed");
 }
 

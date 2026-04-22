@@ -261,7 +261,7 @@ HGDIOBJ QFontEngineWin::selectDesignFont(float *overhang) const
 {
     LOGFONTW f = logfont;
     f.lfHeight = unitsPerEm;
-    HFONT designFont = (isWinNT() ? CreateFontIndirectW(&f) : CreateFontIndirectA((LOGFONT*)&f));
+    HFONT designFont = (useWide() ? CreateFontIndirectW(&f) : CreateFontIndirectA((LOGFONT*)&f));
     HGDIOBJ oldFont = SelectObject(shared_dc, designFont);
 
     if (QSysInfo::WindowsVersion & QSysInfo::WV_DOS_based) {
@@ -773,7 +773,7 @@ void QFontEngineMultiWin::loadEngine(int at)
 
     LOGFONTW lf = engines.at(0)->logfont;
     HFONT hfont;
-    if (isWinNT()) {
+    if (useWide()) {
         memcpy(lf.lfFaceName, fam.utf16(), sizeof(WCHAR)*qMin(fam.length()+1,32));  // 32 = Windows hard-coded
         hfont = CreateFontIndirectW(&lf);
     } else {

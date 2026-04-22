@@ -1775,15 +1775,15 @@ static QString winIso639LangName()
     // Windows returns the wrong ISO639 for some languages, we need to detect them here using
     // the language code
     QString lang_code;
-    QT_WA({
-        TCHAR out[256];
+    if (!pfnGetLocaleInfoA) {
+        WCHAR out[256];
         if (GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_ILANGUAGE, out, 255))
             lang_code = QString::fromUtf16((ushort*)out);
-    } , {
+    } else {
         char out[256];
-        if (GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_ILANGUAGE, out, 255))
+        if (pfnGetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_ILANGUAGE, out, 255))
             lang_code = QString::fromLocal8Bit(out);
-    });
+    }
 
     if (!lang_code.isEmpty()) {
         const char *endptr;
@@ -1805,15 +1805,15 @@ static QString winIso639LangName()
         return result;
 
     // not one of the problematic languages - do the usual lookup
-    QT_WA({
-        TCHAR out[256];
+    if (!pfnGetLocaleInfoA) {
+        WCHAR out[256];
         if (GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SISO639LANGNAME , out, 255))
             result = QString::fromUtf16((ushort*)out);
-    } , {
+    } else {
         char out[256];
-        if (GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_SISO639LANGNAME, out, 255))
+        if (pfnGetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_SISO639LANGNAME, out, 255))
             result = QString::fromLocal8Bit(out);
-    });
+    }
 
     return result;
 }
@@ -1822,15 +1822,15 @@ static QString winIso3116CtryName()
 {
     QString result;
 
-    QT_WA({
-        TCHAR out[256];
+    if (!pfnGetLocaleInfoA) {
+        WCHAR out[256];
         if (GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SISO3166CTRYNAME, out, 255))
             result = QString::fromUtf16((ushort*)out);
-    } , {
+    } else {
         char out[256];
-        if (GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_SISO3166CTRYNAME, out, 255))
+        if (pfnGetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_SISO3166CTRYNAME, out, 255))
             result = QString::fromLocal8Bit(out);
-    });
+    }
 
     return result;
 }

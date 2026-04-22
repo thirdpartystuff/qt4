@@ -129,7 +129,7 @@ QEventDispatcherWin32Private::QEventDispatcherWin32Private()
     resolveTimerAPI();
     InitializeCriticalSection(&fastTimerCriticalSection);
 
-    wakeUpNotifier.setHandle(QT_WA_INLINE(CreateEventW(0, false, false, 0),
+    wakeUpNotifier.setHandle((useWide() ? CreateEventW(0, false, false, 0) :
                                           CreateEventA(0, false, false, 0)));
     if (!wakeUpNotifier.handle())
         qWarning("QEventDispatcherWin32Private::QEventDispatcherWin32Private(): Creating wakeup event failed");

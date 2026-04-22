@@ -133,7 +133,7 @@ static QString getEnglishName(const QString &familyName)
 
     HDC hdc = GetDC( 0 );
     HFONT hfont;
-    if (isWinNT()) {
+    if (useWide()) {
         LOGFONTW lf;
         memset( &lf, 0, sizeof( LOGFONTW ) );
         memcpy( lf.lfFaceName, familyName.utf16(), qMin(LF_FACESIZE, familyName.length())*sizeof(WCHAR) );
@@ -531,7 +531,7 @@ void populate_database(const QString& fam)
         lf.lfPitchAndFamily = 0;
 
         pfnEnumFontFamiliesExA(dummy, &lf, storeFontExA, (LPARAM)privateDb(), 0);
-    } else if (isWinNT()) {
+    } else if (useWide()) {
         WCHAR faceName[32], *pFaceName;
         if (fam.isNull()) {
             pFaceName = NULL;
@@ -541,7 +541,7 @@ void populate_database(const QString& fam)
         }
 
         EnumFontFamiliesW(dummy, pFaceName, storeFontW, (LPARAM)privateDb());
-    } else if (isWin9x()) {
+    } else {
         char faceName[32], *pFaceName;
         if (fam.isNull()) {
             pFaceName = NULL;
@@ -804,7 +804,7 @@ QFontEngine *loadEngine(int script, const QFontPrivate *fp,
         } else if (request.styleStrategy & QFont::PreferDevice) {
             strat = OUT_DEVICE_PRECIS;
         } else if (request.styleStrategy & QFont::PreferOutline) {
-            if (isWinNT())
+            if (useWide())
                 strat = OUT_OUTLINE_PRECIS;
             else
                 strat = OUT_TT_PRECIS;
@@ -859,7 +859,7 @@ QFontEngine *loadEngine(int script, const QFontPrivate *fp,
             && (request.style == QFont::StyleItalic || (-lf.lfHeight > 18 && -lf.lfHeight != 24))) {
             fam = "Arial"; // MS Sans Serif has bearing problems in italic, and does not scale
         }
-        if (isWinNT()) {
+        if (useWide()) {
             memcpy(lf.lfFaceName, fam.utf16(), sizeof(WCHAR)*qMin(fam.length()+1,32));  // 32 = Windows hard-coded
             hfont = CreateFontIndirectW(&lf);
         } else {
@@ -878,7 +878,7 @@ QFontEngine *loadEngine(int script, const QFontPrivate *fp,
             HGDIOBJ oldObj = SelectObject(hdc, hfont);
             BOOL res;
             int avWidth = 0;
-            if (isWinNT()) {
+            if (useWide()) {
                 TEXTMETRICW tm;
                 res = GetTextMetricsW(hdc, &tm);
                 avWidth = tm.tmAveCharWidth;
@@ -894,7 +894,7 @@ QFontEngine *loadEngine(int script, const QFontPrivate *fp,
             DeleteObject(hfont);
 
             lf.lfWidth = avWidth * request.stretch/100;
-            if (isWinNT())
+            if (useWide())
                 hfont = CreateFontIndirectW(&lf);
             else
                 hfont = CreateFontIndirectA((LOGFONTA*)&lf);

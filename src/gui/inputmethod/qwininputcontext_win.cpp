@@ -204,7 +204,7 @@ QWinInputContext::QWinInputContext(QObject *parent)
 #ifndef Q_OS_TEMP
     // figure out whether a RTL language is installed
     typedef BOOL(WINAPI *PtrIsValidLanguageGroup)(DWORD,DWORD);
-    PtrIsValidLanguageGroup isValidLanguageGroup = (PtrIsValidLanguageGroup)QLibrary::resolve("kernel32", "IsValidLanguageGroup");
+    PtrIsValidLanguageGroup isValidLanguageGroup = (PtrIsValidLanguageGroup)QLibrary::resolve("KERNEL32", "IsValidLanguageGroup");
     if (isValidLanguageGroup) {
         qt_use_rtl_extensions = isValidLanguageGroup(LGRPID_ARABIC, LGRPID_INSTALLED)
                              || isValidLanguageGroup(LGRPID_HEBREW, LGRPID_INSTALLED);

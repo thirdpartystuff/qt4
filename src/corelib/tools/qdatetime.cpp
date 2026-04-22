@@ -31,7 +31,7 @@
 #include "qdebug.h"
 #endif
 #if defined(Q_OS_WIN32)
-#include <windows.h>
+#include <qt_windows.h>
 #include <time.h>
 #endif
 #ifndef Q_WS_WIN
@@ -414,15 +414,15 @@ QString QDate::shortMonthName(int month)
     st.wMonth = month;
     st.wDay = 1;
     const wchar_t mmm_t[] = L"MMM"; // workaround for Borland
-    QT_WA({
-        TCHAR buf[255];
-        if (GetDateFormat(LOCALE_USER_DEFAULT, 0, &st, mmm_t, buf, 255))
+    if (!pfnGetDateFormatA) {
+        WCHAR buf[255];
+        if (GetDateFormatW(LOCALE_USER_DEFAULT, 0, &st, mmm_t, buf, 255))
             return QString::fromUtf16((ushort*)buf);
-    } , {
+    } else {
         char buf[255];
-        if (GetDateFormatA(LOCALE_USER_DEFAULT, 0, &st, "MMM", (char*)&buf, 255))
+        if (pfnGetDateFormatA(LOCALE_USER_DEFAULT, 0, &st, "MMM", (char*)&buf, 255))
             return QString::fromLocal8Bit(buf);
-    });
+    }
 #endif
     return QString();
 }
@@ -476,15 +476,15 @@ QString QDate::longMonthName(int month)
     st.wMonth = month;
     st.wDay = 1;
     const wchar_t mmmm_t[] = L"MMMM"; // workaround for Borland
-    QT_WA({
-        TCHAR buf[255];
-        if (GetDateFormat(LOCALE_USER_DEFAULT, 0, &st, mmmm_t, buf, 255))
+    if (!pfnGetDateFormatA) {
+        WCHAR buf[255];
+        if (GetDateFormatW(LOCALE_USER_DEFAULT, 0, &st, mmmm_t, buf, 255))
             return QString::fromUtf16((ushort*)buf);
-    } , {
+    } else {
         char buf[255];
-        if (GetDateFormatA(LOCALE_USER_DEFAULT, 0, &st, "MMMM", (char*)&buf, 255))
+        if (pfnGetDateFormatA(LOCALE_USER_DEFAULT, 0, &st, "MMMM", (char*)&buf, 255))
             return QString::fromLocal8Bit(buf);
-    })
+    }
 #endif
     return QString();
 }
@@ -535,15 +535,15 @@ QString QDate::shortDayName(int weekday)
     st.wDayOfWeek = (weekday == 7) ? 0 : weekday;
     st.wDay = 21 + st.wDayOfWeek;
     const wchar_t ddd_t[] = L"ddd"; // workaround for Borland
-    QT_WA({
-        TCHAR buf[255];
-        if (GetDateFormat(LOCALE_USER_DEFAULT, 0, &st, ddd_t, buf, 255))
+    if (!pfnGetDateFormatA) {
+        WCHAR buf[255];
+        if (GetDateFormatW(LOCALE_USER_DEFAULT, 0, &st, ddd_t, buf, 255))
             return QString::fromUtf16((ushort*)buf);
-    } , {
+    } else {
         char buf[255];
-        if (GetDateFormatA(LOCALE_USER_DEFAULT, 0, &st, "ddd", (char*)&buf, 255))
+        if (pfnGetDateFormatA(LOCALE_USER_DEFAULT, 0, &st, "ddd", (char*)&buf, 255))
             return QString::fromLocal8Bit(buf);
-    });
+    }
 #endif
     return QString();
 }
@@ -593,15 +593,15 @@ QString QDate::longDayName(int weekday)
     st.wDayOfWeek = (weekday == 7) ? 0 : weekday;
     st.wDay = 21 + st.wDayOfWeek;
     const wchar_t dddd_t[] = L"dddd"; // workaround for Borland
-    QT_WA({
-        TCHAR buf[255];
-        if (GetDateFormat(LOCALE_USER_DEFAULT, 0, &st, dddd_t, buf, 255))
+    if (!pfnGetDateFormatA) {
+        WCHAR buf[255];
+        if (GetDateFormatW(LOCALE_USER_DEFAULT, 0, &st, dddd_t, buf, 255))
             return QString::fromUtf16((ushort*)buf);
-    } , {
+    } else {
         char buf[255];
-        if (GetDateFormatA(LOCALE_USER_DEFAULT, 0, &st, "dddd", (char*)&buf, 255))
+        if (pfnGetDateFormatA(LOCALE_USER_DEFAULT, 0, &st, "dddd", (char*)&buf, 255))
             return QString::fromLocal8Bit(buf);
-    });
+    }
 #endif
     return QString();
 }
@@ -651,15 +651,15 @@ QString QDate::toString(Qt::DateFormat f) const
             st.wYear = year();
             st.wMonth = month();
             st.wDay = day();
-            QT_WA({
-                TCHAR buf[255];
-                if (GetDateFormat(LOCALE_USER_DEFAULT, 0, &st, 0, buf, 255))
+            if (!pfnGetDateFormatA) {
+                WCHAR buf[255];
+                if (GetDateFormatW(LOCALE_USER_DEFAULT, 0, &st, 0, buf, 255))
                     return QString::fromUtf16((ushort*)buf);
-            } , {
+            } else {
                 char buf[255];
-                if (GetDateFormatA(LOCALE_USER_DEFAULT, 0, &st, 0, (char*)&buf, 255))
+                if (pfnGetDateFormatA(LOCALE_USER_DEFAULT, 0, &st, 0, (char*)&buf, 255))
                     return QString::fromLocal8Bit(buf);
-            });
+            }
 #elif defined(Q_WS_MAC)
             CFGregorianDate macGDate;
             macGDate.year = year();
@@ -1427,15 +1427,15 @@ QString QTime::toString(Qt::DateFormat f) const
             st.wMinute = minute();
             st.wSecond = second();
             st.wMilliseconds = 0;
-            QT_WA({
-                TCHAR buf[255];
-                if (GetTimeFormat(LOCALE_USER_DEFAULT, 0, &st, 0, buf, 255))
+            if (!pfnGetTimeFormatA) {
+                WCHAR buf[255];
+                if (GetTimeFormatW(LOCALE_USER_DEFAULT, 0, &st, 0, buf, 255))
                     return QString::fromUtf16((ushort*)buf);
-            } , {
+            } else {
                 char buf[255];
-                if (GetTimeFormatA(LOCALE_USER_DEFAULT, 0, &st, 0, (char*)&buf, 255))
+                if (pfnGetTimeFormatA(LOCALE_USER_DEFAULT, 0, &st, 0, (char*)&buf, 255))
                     return QString::fromLocal8Bit(buf);
-            });
+            }
 #elif defined (Q_WS_MAC)
             CFGregorianDate macGDate;
             // Assume this is local time and the current date
@@ -2234,15 +2234,15 @@ QString QDateTime::toString(Qt::DateFormat f) const
         buf += QString::number(d->date.day());
 #else
         QString winstr;
-        QT_WA({
-            TCHAR out[255];
-            GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_ILDATE, out, 255);
+        if (!pfnGetLocaleInfoA) {
+            WCHAR out[255];
+            GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_ILDATE, out, 255);
             winstr = QString::fromUtf16((ushort*)out);
-        } , {
+        } else {
             char out[255];
-            GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_ILDATE, (char*)&out, 255);
+            pfnGetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_ILDATE, (char*)&out, 255);
             winstr = QString::fromLocal8Bit(out);
-        });
+        }
         switch (winstr.toInt()) {
         case 1:
             buf = d->date.shortDayName(d->date.dayOfWeek());

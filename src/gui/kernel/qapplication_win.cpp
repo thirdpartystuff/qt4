@@ -1958,12 +1958,21 @@ LRESULT CALLBACK QtWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam
 
 #ifndef Q_OS_TEMP
         case WM_INPUTLANGCHANGE: {
+          if (pfnGetLocaleInfoA) {
             char info[7];
-            if (!GetLocaleInfoA(MAKELCID(lParam, SORT_DEFAULT), LOCALE_IDEFAULTANSICODEPAGE, info, 6)) {
+            if (!pfnGetLocaleInfoA(MAKELCID(lParam, SORT_DEFAULT), LOCALE_IDEFAULTANSICODEPAGE, info, 6)) {
                 inputcharset = CP_ACP;
             } else {
                 inputcharset = QString(info).toInt();
             }
+          } else {
+            WCHAR info[7];
+            if (!GetLocaleInfoW(MAKELCID(lParam, SORT_DEFAULT), LOCALE_IDEFAULTANSICODEPAGE, info, 6)) {
+                inputcharset = CP_ACP;
+            } else {
+                inputcharset = QString::fromUtf16((ushort*)info).toInt();
+            }
+          }
             break;
         }
 #else

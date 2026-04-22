@@ -95,9 +95,10 @@ Q_CORE_EXPORT void qWinMsgHandler(QtMsgType t, const char* str)
 }
 
 struct Dll { const char* asciiName; const TCHAR* name; HINSTANCE handle; };
-static Dll gdi32  = { "GDI32",  TEXT("GDI32"),  NULL };
-static Dll ole32  = { "OLE32",  TEXT("OLE32"),  NULL };
-static Dll rpcrt4 = { "RPCRT4", TEXT("RPCRT4"), NULL };
+static Dll kernel32 = { "KERNEL32", TEXT("KERNEL32"), NULL };
+static Dll gdi32    = { "GDI32",    TEXT("GDI32"),    NULL };
+static Dll ole32    = { "OLE32",    TEXT("OLE32"),    NULL };
+static Dll rpcrt4   = { "RPCRT4",   TEXT("RPCRT4"),   NULL };
 
 static HINSTANCE GetModuleHandle_(Dll* dll)
 {
@@ -132,16 +133,16 @@ static FARPROC GetProcAddress_(Dll* dll, LPCSTR lpProcName)
     return ptr;
 }
 
-static FARPROC GetProcAddress9x(Dll* dll, LPCSTR lpProcName)
+static FARPROC GetProcAddressA(Dll* dll, LPCSTR lpProcName)
 {
-    if (!isWin9x())
+    if (useWide())
         return NULL;
     return GetProcAddress_(dll, lpProcName);
 }
 
-static FARPROC GetProcAddressNT(Dll* dll, LPCSTR lpProcName)
+static FARPROC GetProcAddressW(Dll* dll, LPCSTR lpProcName)
 {
-    if (!isWinNT())
+    if (!useWide())
         return NULL;
     return GetProcAddress_(dll, lpProcName);
 }
@@ -242,12 +243,19 @@ void qWinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdParam,
                   .lower().remove('\\').utf16());
 #endif
 
+    if (GetModuleHandle_(&kernel32)) {
+        pfnCompareStringA = (PFNCOMPARESTRINGA)GetProcAddressA(&kernel32, "CompareStringA");
+        pfnGetDateFormatA = (PFNGETDATEFORMATA)GetProcAddressA(&kernel32, "GetDateFormatA");
+        pfnGetTimeFormatA = (PFNGETTIMEFORMATA)GetProcAddressA(&kernel32, "GetTimeFormatA");
+        pfnGetLocaleInfoA = (PFNGETLOCALEINFOA)GetProcAddressA(&kernel32, "GetLocaleInfoA");
+    }
+
     if (GetModuleHandle_(&gdi32)) {
         if (!isWin32s())
             pfnCreateDIBSection = (PFNCREATEDIBSECTION)GetProcAddress_(&gdi32, "CreateDIBSection");
         pfnGetTextCharsetInfo = (PFNGETTEXTCHARSETINFO)GetProcAddress_(&gdi32, "GetTextCharsetInfo");
-        pfnEnumFontFamiliesExA = (PFNENUMFONTFAMILIESEXA)GetProcAddress9x(&gdi32, "EnumFontFamiliesExA");
-        pfnEnumFontFamiliesExW = (PFNENUMFONTFAMILIESEXW)GetProcAddressNT(&gdi32, "EnumFontFamiliesExW");
+        pfnEnumFontFamiliesExA = (PFNENUMFONTFAMILIESEXA)GetProcAddressA(&gdi32, "EnumFontFamiliesExA");
+        pfnEnumFontFamiliesExW = (PFNENUMFONTFAMILIESEXW)GetProcAddressW(&gdi32, "EnumFontFamiliesExW");
         pfnTranslateCharsetInfo = (PFNTRANSLATECHARSETINFO)GetProcAddress_(&gdi32, "TranslateCharsetInfo");
     }
 

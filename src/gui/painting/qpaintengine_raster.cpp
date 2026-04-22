@@ -2996,7 +2996,7 @@ static void draw_text_item_win(const QPointF &pos, const QTextItemInt &ti, HDC h
             lf.lfHeight = (int) (lf.lfHeight*scale);
             lf.lfWidth = (int) (lf.lfWidth*scale);
         }
-        HFONT hf = (isWinNT() ? CreateFontIndirectW(&lf) : CreateFontIndirectA((LOGFONTA*)&lf));
+        HFONT hf = (useWide() ? CreateFontIndirectW(&lf) : CreateFontIndirectA((LOGFONTA*)&lf));
         SelectObject(hdc, hf);
     } else {
         SelectObject(hdc, fe->hfont);
