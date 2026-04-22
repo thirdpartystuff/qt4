@@ -79,24 +79,18 @@ Q_CORE_EXPORT QString qAppName()                        // get application name
     return appName;
 }
 
+// OutputDebugString is not threadsafe.
+static QMutex staticMutex;
+
+void qt_win_print_debug_message(const char* buf);
+
 Q_CORE_EXPORT void qWinMsgHandler(QtMsgType t, const char* str)
 {
-    // OutputDebugString is not threadsafe.
-    static QMutex staticMutex;
-
     if (!str)
         str = "(null)";
 
     staticMutex.lock();
-    QT_WA({
-        QString s(str);
-        s += "\n";
-        OutputDebugStringW((TCHAR*)s.utf16());
-    }, {
-        QByteArray s(str);
-        s += "\n";
-        OutputDebugStringA(s.data());
-    })
+    qt_win_print_debug_message(str);
     staticMutex.unlock();
 }
 

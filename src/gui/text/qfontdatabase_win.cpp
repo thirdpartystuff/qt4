@@ -269,7 +269,9 @@ static QString getEnglishName(const QString &familyName)
     DeleteObject( hfont );
     ReleaseDC( 0, hdc );
 
-    //qDebug("got i18n name of '%s' for font '%s'", i18n_name.latin1(), familyName.toLocal8Bit().data());
+  #ifdef QFONTDATABASE_DEBUG
+    qDebug("got i18n name of '%s' for font '%s'", qPrintable(i18n_name), qPrintable(familyName));
+  #endif
     return i18n_name;
 }
 
@@ -407,6 +409,20 @@ storeFont(const LOGFONTW* f, const TEXTMETRICW* textmetric, DWORD type, LPARAM p
                     case CHINESEBIG5_CHARSET: index = QFontDatabase::TraditionalChinese; break;
                     default: index = -1; break;
                 }
+              #ifdef QFONTDATABASE_DEBUG
+                switch (charset) {
+                    case ANSI_CHARSET: qDebug("font %s supports ANSI_CHARSET", qPrintable(familyName)); break;
+                    case RUSSIAN_CHARSET: qDebug("font %s supports RUSSIAN_CHARSET", qPrintable(familyName)); break;
+                    case GREEK_CHARSET: qDebug("font %s supports GREEK_CHARSET", qPrintable(familyName)); break;
+                    case TURKISH_CHARSET: qDebug("font %s supports TURKISH_CHARSET", qPrintable(familyName)); break;
+                    case HEBREW_CHARSET: qDebug("font %s supports HEBREW_CHARSET", qPrintable(familyName)); break;
+                    case ARABIC_CHARSET: qDebug("font %s supports ARABIC_CHARSET", qPrintable(familyName)); break;
+                    case SHIFTJIS_CHARSET: qDebug("font %s supports SHIFTJIS_CHARSET", qPrintable(familyName)); break;
+                    case HANGEUL_CHARSET: qDebug("font %s supports HANGEUL_CHARSET", qPrintable(familyName)); break;
+                    case GB2312_CHARSET: qDebug("font %s supports GB2312_CHARSET", qPrintable(familyName)); break;
+                    case CHINESEBIG5_CHARSET: qDebug("font %s supports CHINESEBIG5_CHARSET", qPrintable(familyName)); break;
+                }
+              #endif
                 family->writingSystems[QFontDatabase::Latin] = QtFontFamily::Supported;
                 if (index >= 0) {
                     family->writingSystems[index] = QtFontFamily::Supported;
@@ -428,34 +444,46 @@ storeFont(const LOGFONTW* f, const TEXTMETRICW* textmetric, DWORD type, LPARAM p
                     if (bit == 127 || signature.fsUsb[index] & flag) {
                         family->writingSystems[i] = QtFontFamily::Supported;
                         hasScript = true;
-                        // qDebug("font %s: index=%d, flag=%8x supports script %d", familyName.latin1(), index, flag, i);
+                      #ifdef QFONTDATABASE_DEBUG
+                        qDebug("font %s: index=%d, flag=%8x supports script %d", qPrintable(familyName), index, flag, i);
+                      #endif
                     }
                 }
             }
             if(signature.fsCsb[0] & (1 << SimplifiedChineseCsbBit)) {
                 family->writingSystems[QFontDatabase::SimplifiedChinese] = QtFontFamily::Supported;
                 hasScript = true;
-                //qDebug("font %s supports Simplified Chinese", familyName.latin1());
+              #ifdef QFONTDATABASE_DEBUG
+                qDebug("font %s supports Simplified Chinese", qPrintable(familyName));
+              #endif
             }
             if(signature.fsCsb[0] & (1 << TraditionalChineseCsbBit)) {
                 family->writingSystems[QFontDatabase::TraditionalChinese] = QtFontFamily::Supported;
                 hasScript = true;
-                //qDebug("font %s supports Traditional Chinese", familyName.latin1());
+              #ifdef QFONTDATABASE_DEBUG
+                qDebug("font %s supports Traditional Chinese", qPrintable(familyName));
+              #endif
             }
             if(signature.fsCsb[0] & (1 << JapaneseCsbBit)) {
                 family->writingSystems[QFontDatabase::Japanese] = QtFontFamily::Supported;
                 hasScript = true;
-                //qDebug("font %s supports Japanese", familyName.latin1());
+              #ifdef QFONTDATABASE_DEBUG
+                qDebug("font %s supports Japanese", qPrintable(familyName));
+              #endif
             }
             if(signature.fsCsb[0] & (1 << KoreanCsbBit)) {
                 family->writingSystems[QFontDatabase::Korean] = QtFontFamily::Supported;
                 hasScript = true;
-                //qDebug("font %s supports Korean", familyName.latin1());
+              #ifdef QFONTDATABASE_DEBUG
+                qDebug("font %s supports Korean", qPrintable(familyName));
+              #endif
             }
             if (!hasScript)
                 family->writingSystems[QFontDatabase::Other] = QtFontFamily::Supported;
             family->writingSystemCheck = true;
-            // qDebug("usb=%08x %08x csb=%08x for %s", signature.fsUsb[0], signature.fsUsb[1], signature.fsCsb[0], familyName.latin1());
+          #ifdef QFONTDATABASE_DEBUG
+            qDebug("usb=%08x %08x csb=%08x for %s", signature.fsUsb[0], signature.fsUsb[1], signature.fsCsb[0], qPrintable(familyName));
+          #endif
         } else if (!family->writingSystemCheck) {
             family->writingSystems[QFontDatabase::Other] = QtFontFamily::Supported;
         }
@@ -541,7 +569,7 @@ static void initializeDb()
     // print the database
     for (int f = 0; f < db->count; f++) {
         QtFontFamily *family = db->families[f];
-        qDebug("    %s: %p", family->name.latin1(), family);
+        qDebug("    %s: %p", qPrintable(family->name), family);
         populate_database(family->name);
 
         qDebug("        scripts supported:");
@@ -550,7 +578,7 @@ static void initializeDb()
                 qDebug("            %d", i);
         for (int fd = 0; fd < family->count; fd++) {
             QtFontFoundry *foundry = family->foundries[fd];
-            qDebug("        %s", foundry->name.latin1());
+            qDebug("        %s", qPrintable(foundry->name));
             for (int s = 0; s < foundry->count; s++) {
                 QtFontStyle *style = foundry->styles[s];
                 qDebug("            style: style=%d weight=%d", style->key.style, style->key.weight);

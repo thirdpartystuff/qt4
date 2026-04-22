@@ -1802,6 +1802,48 @@ QtMsgHandler qInstallMsgHandler(QtMsgHandler h)
     return old;
 }
 
+#ifdef Q_WS_WIN
+static HANDLE g_hDebugFile = INVALID_HANDLE_VALUE;
+void qt_win_print_debug_message(const char* str)
+{
+    if (!str)
+        str = "(null)";
+
+    if (isWinNT()) {
+        QString fstr(str);
+        fstr += "\r\n";
+        OutputDebugStringW((LPCWSTR)fstr.utf16());
+      #ifndef QT_NO_DEBUG
+        DWORD dwBytesWritten;
+        AllocConsole();
+        WriteConsoleW(GetStdHandle(STD_ERROR_HANDLE), (LPCWSTR)fstr.utf16(), fstr.length(), &dwBytesWritten, NULL);
+      #endif
+    } else {
+        QByteArray lstr = str;
+        lstr += "\r\n";
+        OutputDebugStringA(lstr.constData());
+      #ifndef QT_NO_DEBUG
+        DWORD dwBytesWritten;
+        if (isWin32s()) {
+            if (g_hDebugFile == INVALID_HANDLE_VALUE) {
+                char buf[MAX_PATH] = {0};
+                GetModuleFileNameA(NULL, buf, sizeof(buf));
+                char* pt = strrchr(buf, '.');
+                if (pt)
+                    strcpy(pt, ".txt");
+                else
+                    strcat(buf, ".txt");
+                g_hDebugFile = CreateFileA(buf, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, 0, NULL);
+            }
+            WriteFile(g_hDebugFile, lstr.constData(), lstr.length(), &dwBytesWritten, NULL);
+        } else {
+            AllocConsole();
+            WriteConsoleA(GetStdHandle(STD_ERROR_HANDLE), lstr.constData(), lstr.length(), &dwBytesWritten, NULL);
+        }
+      #endif
+    }
+}
+#endif
 
 void qt_message_output(QtMsgType msgType, const char *buf)
 {
@@ -1810,9 +1852,8 @@ void qt_message_output(QtMsgType msgType, const char *buf)
     } else {
 #if defined(Q_CC_MWERKS)
         mac_default_handler(buf);
-#elif defined(Q_OS_TEMP)
-        QString fstr(buf);
-        OutputDebugString((fstr + "\n").utf16());
+#elif defined(Q_WS_WIN)
+        qt_win_print_debug_message(buf);
 #else
         fprintf(stderr, "%s\n", buf);
 #endif
@@ -1831,12 +1872,12 @@ void qt_message_output(QtMsgType msgType, const char *buf)
             return; // ignore
         else if (ret == 1)
             _CrtDbgBreak();
-#endif
-
+#else
       #ifdef _WIN32
         MessageBoxA(NULL, buf, NULL, MB_ICONERROR | MB_OK);
         DebugBreak();
       #endif
+#endif
 
 #if defined(Q_OS_UNIX) && defined(QT_DEBUG)
         abort(); // trap; generates core dump
