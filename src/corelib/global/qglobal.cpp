@@ -41,6 +41,8 @@ PFNCOMPARESTRINGA pfnCompareStringA;
 PFNGETDATEFORMATA pfnGetDateFormatA;
 PFNGETTIMEFORMATA pfnGetTimeFormatA;
 PFNGETLOCALEINFOA pfnGetLocaleInfoA;
+PFNISVALIDLOCALE pfnIsValidLocale;
+PFNISVALIDLANGUAGEGROUP pfnIsValidLanguageGroup;
 PFNMSGWAITFORMULTIPLEOBJECTSEX pfnMsgWaitForMultipleObjectsEx;
 PFNCREATEDIBSECTION pfnCreateDIBSection;
 PFNGETTEXTCHARSETINFO pfnGetTextCharsetInfo;
@@ -68,6 +70,16 @@ PFNREVOKEDRAGDROP pfnRevokeDragDrop;
 PFNUUIDCREATE pfnUuidCreate;
 PFNUUIDTOSTRINGW pfnUuidToStringW;
 PFNRPCSTRINGFREEW pfnRpcStringFreeW;
+PFNIMMGETCONTEXT pfnImmGetContext;
+PFNIMMRELEASECONTEXT pfnImmReleaseContext;
+PFNIMMNOTIFYIME pfnImmNotifyIME;
+PFNIMMGETCOMPOSITIONSTRINGA pfnImmGetCompositionStringA;
+PFNIMMGETCOMPOSITIONSTRINGW pfnImmGetCompositionStringW;
+PFNIMMSETCANDIDATEWINDOW pfnImmSetCandidateWindow;
+PFNIMMSETCOMPOSITIONWINDOW pfnImmSetCompositionWindow;
+PFNIMMSETCOMPOSITIONFONTA pfnImmSetCompositionFontA;
+PFNIMMSETCOMPOSITIONFONTW pfnImmSetCompositionFontW;
+PFNIMMASSOCIATECONTEXT pfnImmAssociateContext;
 bool isWin32s(void) { return QSysInfo::WindowsVersion == QSysInfo::WV_32s; }
 bool useWide(void) { return ((QSysInfo::WindowsVersion & QSysInfo::WV_DOS_based) == 0); }
 #endif

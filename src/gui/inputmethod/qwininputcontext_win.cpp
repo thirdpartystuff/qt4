@@ -178,14 +178,18 @@ bool qt_use_rtl_extensions = false;
 #define LGRPID_ARMENIAN              0x0011   // Armenian
 #endif
 
+#ifndef LANG_SYRIAC
+#define LANG_SYRIAC 0x5a
+#endif
 
 QWinInputContext::QWinInputContext(QObject *parent)
     : QInputContext(parent)
 {
+    aimm = 0;
     if (QSysInfo::WindowsVersion < QSysInfo::WV_2000) {
         // try to get the Active IMM COM object on Win95/98/NT, where english versions don't
         // support the regular Windows input methods.
-        if (CoCreateInstance(CLSID_CActiveIMM, NULL, CLSCTX_INPROC_SERVER,
+        if (!pfnCoCreateInstance || pfnCoCreateInstance(CLSID_CActiveIMM, NULL, CLSCTX_INPROC_SERVER,
             IID_IActiveIMMApp, (LPVOID *)&aimm) != S_OK) {
             aimm = 0;
         }
@@ -201,23 +205,18 @@ QWinInputContext::QWinInputContext(QObject *parent)
             aimmpump->Start();
     }
 
-#ifndef Q_OS_TEMP
     // figure out whether a RTL language is installed
-    typedef BOOL(WINAPI *PtrIsValidLanguageGroup)(DWORD,DWORD);
-    PtrIsValidLanguageGroup isValidLanguageGroup = (PtrIsValidLanguageGroup)QLibrary::resolve("KERNEL32", "IsValidLanguageGroup");
-    if (isValidLanguageGroup) {
-        qt_use_rtl_extensions = isValidLanguageGroup(LGRPID_ARABIC, LGRPID_INSTALLED)
-                             || isValidLanguageGroup(LGRPID_HEBREW, LGRPID_INSTALLED);
-    }
-    qt_use_rtl_extensions |= IsValidLocale(MAKELCID(MAKELANGID(LANG_ARABIC, SUBLANG_DEFAULT), SORT_DEFAULT), LCID_INSTALLED)
-                          || IsValidLocale(MAKELCID(MAKELANGID(LANG_HEBREW, SUBLANG_DEFAULT), SORT_DEFAULT), LCID_INSTALLED)
-#ifdef LANG_SYRIAC
-                          || IsValidLocale(MAKELCID(MAKELANGID(LANG_SYRIAC, SUBLANG_DEFAULT), SORT_DEFAULT), LCID_INSTALLED)
-#endif
-                          || IsValidLocale(MAKELCID(MAKELANGID(LANG_FARSI, SUBLANG_DEFAULT), SORT_DEFAULT), LCID_INSTALLED);
-#else
     qt_use_rtl_extensions = false;
-#endif // Q_OS_TEMP
+    if (pfnIsValidLanguageGroup) {
+        qt_use_rtl_extensions = pfnIsValidLanguageGroup(LGRPID_ARABIC, LGRPID_INSTALLED)
+                             || pfnIsValidLanguageGroup(LGRPID_HEBREW, LGRPID_INSTALLED);
+    }
+    if (pfnIsValidLocale) {
+        qt_use_rtl_extensions |= pfnIsValidLocale(MAKELCID(MAKELANGID(LANG_ARABIC, SUBLANG_DEFAULT), SORT_DEFAULT), LCID_INSTALLED)
+                              || pfnIsValidLocale(MAKELCID(MAKELANGID(LANG_HEBREW, SUBLANG_DEFAULT), SORT_DEFAULT), LCID_INSTALLED)
+                              || pfnIsValidLocale(MAKELCID(MAKELANGID(LANG_SYRIAC, SUBLANG_DEFAULT), SORT_DEFAULT), LCID_INSTALLED)
+                              || pfnIsValidLocale(MAKELCID(MAKELANGID(LANG_FARSI, SUBLANG_DEFAULT), SORT_DEFAULT), LCID_INSTALLED);
+    }
 }
 
 QWinInputContext::~QWinInputContext()
@@ -237,11 +236,11 @@ QWinInputContext::~QWinInputContext()
 
 static HIMC getContext(HWND wnd)
 {
-    HIMC imc;
+    HIMC imc = NULL;
     if (aimm)
         aimm->GetContext(wnd, &imc);
     else
-        imc = ImmGetContext(wnd);
+        imc = (pfnImmGetContext ? pfnImmGetContext(wnd) : NULL);
 
     return imc;
 }
@@ -251,7 +250,7 @@ static void releaseContext(HWND wnd, HIMC imc)
     if (aimm)
         aimm->ReleaseContext(wnd, imc);
     else
-        ImmReleaseContext(wnd, imc);
+        if (pfnImmReleaseContext) pfnImmReleaseContext(wnd, imc);
 }
 
 static void notifyIME(HIMC imc, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
@@ -261,7 +260,7 @@ static void notifyIME(HIMC imc, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
     if (aimm)
         aimm->NotifyIME(imc, dwAction, dwIndex, dwValue);
     else
-        ImmNotifyIME(imc, dwAction, dwIndex, dwValue);
+        if (pfnImmNotifyIME) pfnImmNotifyIME(imc, dwAction, dwIndex, dwValue);
 }
 
 static LONG getCompositionString(HIMC himc, DWORD dwIndex, LPVOID lpbuf, DWORD dBufLen, bool *unicode = 0)
@@ -275,16 +274,14 @@ static LONG getCompositionString(HIMC himc, DWORD dwIndex, LPVOID lpbuf, DWORD d
     else
 #endif
     {
-        if(QSysInfo::WindowsVersion != QSysInfo::WV_95) {
-            len = ImmGetCompositionStringW(himc, dwIndex, lpbuf, dBufLen);
+        if(QSysInfo::WindowsVersion != QSysInfo::WV_95 && pfnImmGetCompositionStringW) {
+            len = pfnImmGetCompositionStringW(himc, dwIndex, lpbuf, dBufLen);
         }
-#ifndef Q_OS_TEMP
-        else {
-            len = ImmGetCompositionStringA(himc, dwIndex, lpbuf, dBufLen);
+        else if (pfnImmGetCompositionStringA) {
+            len = pfnImmGetCompositionStringA(himc, dwIndex, lpbuf, dBufLen);
             if (unicode)
                 *unicode = false;
         }
-#endif
     }
     return len;
 }
@@ -386,21 +383,21 @@ void QWinInputContext::update()
     HFONT hf;
     hf = f.handle();
 
-    QT_WA({
-        LOGFONT lf;
-        if (GetObject(hf, sizeof(lf), &lf))
+    if (useWide()) {
+        LOGFONTW lf;
+        if (GetObjectW(hf, sizeof(lf), &lf))
             if (aimm)
                 aimm->SetCompositionFontW(imc, &lf);
             else
-                ImmSetCompositionFont(imc, &lf);
-    } , {
+                if (pfnImmSetCompositionFontW) pfnImmSetCompositionFontW(imc, &lf);
+    } else {
         LOGFONTA lf;
         if (GetObjectA(hf, sizeof(lf), &lf))
             if (aimm)
                 aimm->SetCompositionFontA(imc, &lf);
             else
-                ImmSetCompositionFontA(imc, &lf);
-    });
+                if (pfnImmSetCompositionFontA) pfnImmSetCompositionFontA(imc, &lf);
+    }
 
     QRect r = w->inputMethodQuery(Qt::ImMicroFocus).toRect();
 
@@ -425,8 +422,8 @@ void QWinInputContext::update()
         aimm->SetCompositionWindow(imc, &cf);
         aimm->SetCandidateWindow(imc, &candf);
     } else {
-        ImmSetCompositionWindow(imc, &cf);
-        ImmSetCandidateWindow(imc, &candf);
+        if (pfnImmSetCompositionWindow) pfnImmSetCompositionWindow(imc, &cf);
+        if (pfnImmSetCandidateWindow) pfnImmSetCandidateWindow(imc, &candf);
     }
 
     releaseContext(w->winId(), imc);
@@ -613,11 +610,11 @@ void QWinInputContext::enable(QWidget *w, bool e)
             }
         } else {
             if (!e) {
-                HIMC oldimc = ImmAssociateContext(w->winId(), 0);
+                HIMC oldimc = (pfnImmAssociateContext ? pfnImmAssociateContext(w->winId(), 0) : NULL);
                 if (!defaultContext)
                     defaultContext = oldimc;
             } else if (defaultContext) {
-                ImmAssociateContext(w->winId(), defaultContext);
+                if (pfnImmAssociateContext) pfnImmAssociateContext(w->winId(), defaultContext);
             }
         }
     }

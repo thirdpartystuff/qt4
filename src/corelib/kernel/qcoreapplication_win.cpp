@@ -100,6 +100,7 @@ static Dll user32   = { "USER32",   TEXT("USER32"),   NULL };
 static Dll gdi32    = { "GDI32",    TEXT("GDI32"),    NULL };
 static Dll ole32    = { "OLE32",    TEXT("OLE32"),    NULL };
 static Dll rpcrt4   = { "RPCRT4",   TEXT("RPCRT4"),   NULL };
+static Dll imm32    = { "IMM32",    TEXT("IMM32"),    NULL };
 
 static HINSTANCE GetModuleHandle_(Dll* dll)
 {
@@ -258,6 +259,8 @@ void qWinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdParam,
         pfnGetDateFormatA = (PFNGETDATEFORMATA)GetProcAddressA(&kernel32, "GetDateFormatA");
         pfnGetTimeFormatA = (PFNGETTIMEFORMATA)GetProcAddressA(&kernel32, "GetTimeFormatA");
         pfnGetLocaleInfoA = (PFNGETLOCALEINFOA)GetProcAddressA(&kernel32, "GetLocaleInfoA");
+        pfnIsValidLocale = (PFNISVALIDLOCALE)GetProcAddress_(&kernel32, "IsValidLocale");
+        pfnIsValidLanguageGroup = (PFNISVALIDLANGUAGEGROUP)GetProcAddress_(&kernel32, "IsValidLanguageGroup");
     }
 
     if (GetModuleHandle_(&user32)) {
@@ -296,6 +299,19 @@ void qWinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdParam,
         pfnUuidCreate = (PFNUUIDCREATE)GetProcAddress_(&rpcrt4, "UuidCreate");
         pfnUuidToStringW = (PFNUUIDTOSTRINGW)GetProcAddress_(&rpcrt4, "UuidToStringW");
         pfnRpcStringFreeW = (PFNRPCSTRINGFREEW)GetProcAddress_(&rpcrt4, "RpcStringFreeW");
+    }
+
+    if (!isWin32s() && LoadLibrary_(&imm32)) {
+        pfnImmGetContext = (PFNIMMGETCONTEXT)GetProcAddress_(&imm32, "ImmGetContext");
+        pfnImmReleaseContext = (PFNIMMRELEASECONTEXT)GetProcAddress_(&imm32, "ImmReleaseContext");
+        pfnImmNotifyIME = (PFNIMMNOTIFYIME)GetProcAddress_(&imm32, "ImmNotifyIME");
+        pfnImmGetCompositionStringA = (PFNIMMGETCOMPOSITIONSTRINGA)GetProcAddress_(&imm32, "ImmGetCompositionStringA");
+        pfnImmGetCompositionStringW = (PFNIMMGETCOMPOSITIONSTRINGW)GetProcAddress_(&imm32, "ImmGetCompositionStringW");
+        pfnImmSetCandidateWindow = (PFNIMMSETCANDIDATEWINDOW)GetProcAddress_(&imm32, "ImmSetCandidateWindow");
+        pfnImmSetCompositionWindow = (PFNIMMSETCOMPOSITIONWINDOW)GetProcAddress_(&imm32, "ImmSetCompositionWindow");
+        pfnImmSetCompositionFontA = (PFNIMMSETCOMPOSITIONFONTA)GetProcAddress_(&imm32, "ImmSetCompositionFontA");
+        pfnImmSetCompositionFontW = (PFNIMMSETCOMPOSITIONFONTW)GetProcAddress_(&imm32, "ImmSetCompositionFontW");
+        pfnImmAssociateContext = (PFNIMMASSOCIATECONTEXT)GetProcAddress_(&imm32, "ImmAssociateContext");
     }
 }
 
