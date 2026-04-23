@@ -10,8 +10,6 @@ endif()
 
 add_subdirectory(../qt qt)
 
-set(gen)
+include(examples.cmake)
 include(demos.cmake)
-
-set(gen)
 include(designer.cmake)

@@ -7,6 +7,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         )
 endif()
 
+set(gen)
 moc("${ROOT}/tools/designer/src/components/buddyeditor/buddyeditor.h")
 moc("${ROOT}/tools/designer/src/components/buddyeditor/buddyeditor_plugin.h")
 moc("${ROOT}/tools/designer/src/components/buddyeditor/buddyeditor_tool.h")

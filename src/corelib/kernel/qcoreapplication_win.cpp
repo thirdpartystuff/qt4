@@ -166,6 +166,64 @@ static int CALLBACK dummy_WSAGetLastError()
     return WSAVERNOTSUPPORTED;
 }
 
+static struct WSAStartupCleanup {
+    CRITICAL_SECTION cs;
+    int m_version;
+    WSAStartupCleanup()
+        : m_version(0)
+    {
+        InitializeCriticalSection(&cs);
+    }
+    ~WSAStartupCleanup()
+    {
+        DeleteCriticalSection(&cs);
+        if (m_version && pfnWSACleanup)
+            pfnWSACleanup();
+    }
+    int start()
+    {
+        if (m_version)
+            return m_version;
+
+        EnterCriticalSection(&cs);
+        if (m_version) {
+            LeaveCriticalSection(&cs);
+            return m_version;
+        }
+
+        // IPv6 requires Winsock v2.0 or better.
+        WSAData wsadata;
+        if (!pfnWSAStartup || pfnWSAStartup(MAKEWORD(2,0), &wsadata) != 0)
+            qWarning("QTcpSocketAPI: WinSock initialization failed.");
+        else {
+            quint8 major = LOBYTE(wsadata.wVersion);
+            quint8 minor = HIBYTE(wsadata.wVersion);
+          #ifndef QT_NO_DEBUG
+            static bool reported;
+            if (!reported) {
+                reported = true;
+                qDebug("Initialized WinSock version %d.%d", major, minor);
+            }
+          #endif
+            m_version = major * 0x10 + minor;
+        }
+
+        LeaveCriticalSection(&cs);
+        return m_version;
+    }
+} wsaStartupCleanup;
+
+bool qt_wsa_init(int* version)
+{
+    int ver = wsaStartupCleanup.start();
+    if (!ver)
+        return false;
+    else {
+        *version = ver;
+        return true;
+    }
+}
+
 /*****************************************************************************
   qWinMain() - Initializes Windows. Called from WinMain() in qtmain_win.cpp
  *****************************************************************************/
@@ -332,7 +390,7 @@ void qWinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdParam,
         pfnImmAssociateContext = (PFNIMMASSOCIATECONTEXT)GetProcAddress_(&imm32, "ImmAssociateContext");
     }
 
-    if (LoadLibrary_(&ws2_32)) {
+    if (!isWin32s() && LoadLibrary_(&ws2_32)) {
         pfnaccept = (PFNACCEPT)GetProcAddress_(&ws2_32, "accept");
         pfnbind = (PFNBIND)GetProcAddress_(&ws2_32, "bind");
         pfnclosesocket = (PFNCLOSESOCKET)GetProcAddress_(&ws2_32, "closesocket");

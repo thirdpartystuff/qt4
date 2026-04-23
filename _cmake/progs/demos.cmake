@@ -1,4 +1,5 @@
 
+set(gen)
 moc("${ROOT}/demos/mainwindow/colorswatch.h")
 moc("${ROOT}/demos/mainwindow/mainwindow.h")
 moc("${ROOT}/demos/mainwindow/toolbar.h")
