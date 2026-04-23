@@ -100,8 +100,10 @@ static Dll user32   = { "USER32",   TEXT("USER32"),   NULL };
 static Dll gdi32    = { "GDI32",    TEXT("GDI32"),    NULL };
 static Dll ole32    = { "OLE32",    TEXT("OLE32"),    NULL };
 static Dll rpcrt4   = { "RPCRT4",   TEXT("RPCRT4"),   NULL };
-static Dll shell32   ={ "SHELL32",  TEXT("SHELL32"),  NULL };
+static Dll shell32  = { "SHELL32",  TEXT("SHELL32"),  NULL };
 static Dll imm32    = { "IMM32",    TEXT("IMM32"),    NULL };
+static Dll wsock32  = { "WSOCK32",  TEXT("WSOCK32"),  NULL };
+static Dll ws2_32   = { "WS2_32",   TEXT("WS2_32"),   NULL };
 
 static HINSTANCE GetModuleHandle_(Dll* dll)
 {
@@ -157,6 +159,11 @@ static FARPROC GetProcAddressW(Dll* dll, LPCSTR lpProcName)
     if (!useWide())
         return NULL;
     return GetProcAddress_(dll, lpProcName);
+}
+
+static int CALLBACK dummy_WSAGetLastError()
+{
+    return WSAVERNOTSUPPORTED;
 }
 
 /*****************************************************************************
@@ -324,6 +331,76 @@ void qWinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdParam,
         pfnImmSetCompositionFontW = (PFNIMMSETCOMPOSITIONFONTW)GetProcAddress_(&imm32, "ImmSetCompositionFontW");
         pfnImmAssociateContext = (PFNIMMASSOCIATECONTEXT)GetProcAddress_(&imm32, "ImmAssociateContext");
     }
+
+    if (LoadLibrary_(&ws2_32)) {
+        pfnaccept = (PFNACCEPT)GetProcAddress_(&ws2_32, "accept");
+        pfnbind = (PFNBIND)GetProcAddress_(&ws2_32, "bind");
+        pfnclosesocket = (PFNCLOSESOCKET)GetProcAddress_(&ws2_32, "closesocket");
+        pfnconnect = (PFNCONNECT)GetProcAddress_(&ws2_32, "connect");
+        pfngethostbyname = (PFNGETHOSTBYNAME)GetProcAddress_(&ws2_32, "gethostbyname");
+        pfngethostname = (PFNGETHOSTNAME)GetProcAddress_(&ws2_32, "gethostname");
+        pfngetpeername = (PFNGETPEERNAME)GetProcAddress_(&ws2_32, "getpeername");
+        pfngetsockname = (PFNGETSOCKNAME)GetProcAddress_(&ws2_32, "getsockname");
+        pfngetsockopt = (PFNGETSOCKOPT)GetProcAddress_(&ws2_32, "getsockopt");
+        pfnhtonl = (PFNHTONL)GetProcAddress_(&ws2_32, "htonl");
+        pfnhtons = (PFNHTONS)GetProcAddress_(&ws2_32, "htons");
+        pfnioctlsocket = (PFNIOCTLSOCKET)GetProcAddress_(&ws2_32, "ioctlsocket");
+        pfnlisten = (PFNLISTEN)GetProcAddress_(&ws2_32, "listen");
+        pfnntohl = (PFNNTOHL)GetProcAddress_(&ws2_32, "ntohl");
+        pfnntohs = (PFNNTOHS)GetProcAddress_(&ws2_32, "ntohs");
+        pfnrecv = (PFNRECV)GetProcAddress_(&ws2_32, "recv");
+        pfnrecvfrom = (PFNRECVFROM)GetProcAddress_(&ws2_32, "recvfrom");
+        pfnselect = (PFNSELECT)GetProcAddress_(&ws2_32, "select");
+        pfnsend = (PFNSEND)GetProcAddress_(&ws2_32, "send");
+        pfnsendto = (PFNSENDTO)GetProcAddress_(&ws2_32, "sendto");
+        pfnsetsockopt = (PFNSETSOCKOPT)GetProcAddress_(&ws2_32, "setsockopt");
+        pfnsocket = (PFNSOCKET)GetProcAddress_(&ws2_32, "socket");
+        pfnWSAAccept = (PFNWSAACCEPT)GetProcAddress_(&ws2_32, "WSAAccept");
+        pfnWSAAsyncSelect = (PFNWSAASYNCSELECT)GetProcAddress_(&ws2_32, "WSAAsyncSelect");
+        pfnWSACleanup = (PFNWSACLEANUP)GetProcAddress_(&ws2_32, "WSACleanup");
+        pfnWSAConnect = (PFNWSACONNECT)GetProcAddress_(&ws2_32, "WSAConnect");
+        pfnWSAGetLastError = (PFNWSAGETLASTERROR)GetProcAddress_(&ws2_32, "WSAGetLastError");
+        pfnWSAIoctl = (PFNWSAIOCTL)GetProcAddress_(&ws2_32, "WSAIoctl");
+        pfnWSARecv = (PFNWSARECV)GetProcAddress_(&ws2_32, "WSARecv");
+        pfnWSARecvFrom = (PFNWSARECVFROM)GetProcAddress_(&ws2_32, "WSARecvFrom");
+        pfnWSASend = (PFNWSASEND)GetProcAddress_(&ws2_32, "WSASend");
+        pfnWSASendTo = (PFNWSASENDTO)GetProcAddress_(&ws2_32, "WSASendTo");
+        pfnWSASocketA = (PFNWSASOCKETA)GetProcAddressA(&ws2_32, "WSASocketA");
+        pfnWSASocketW = (PFNWSASOCKETW)GetProcAddressW(&ws2_32, "WSASocketW");
+        pfnWSAStartup = (PFNWSASTARTUP)GetProcAddress_(&ws2_32, "WSAStartup");
+        pfn__WSAFDIsSet = (PFN__WSAFDISSET)GetProcAddress_(&ws2_32, "__WSAFDIsSet");
+    } else if (LoadLibrary_(&wsock32)) {
+        pfnaccept = (PFNACCEPT)GetProcAddress_(&wsock32, "accept");
+        pfnbind = (PFNBIND)GetProcAddress_(&wsock32, "bind");
+        pfnclosesocket = (PFNCLOSESOCKET)GetProcAddress_(&wsock32, "closesocket");
+        pfnconnect = (PFNCONNECT)GetProcAddress_(&wsock32, "connect");
+        pfngethostbyname = (PFNGETHOSTBYNAME)GetProcAddress_(&wsock32, "gethostbyname");
+        pfngethostname = (PFNGETHOSTNAME)GetProcAddress_(&wsock32, "gethostname");
+        pfngetpeername = (PFNGETPEERNAME)GetProcAddress_(&wsock32, "getpeername");
+        pfngetsockname = (PFNGETSOCKNAME)GetProcAddress_(&wsock32, "getsockname");
+        pfngetsockopt = (PFNGETSOCKOPT)GetProcAddress_(&wsock32, "getsockopt");
+        pfnhtonl = (PFNHTONL)GetProcAddress_(&wsock32, "htonl");
+        pfnhtons = (PFNHTONS)GetProcAddress_(&wsock32, "htons");
+        pfnioctlsocket = (PFNIOCTLSOCKET)GetProcAddress_(&wsock32, "ioctlsocket");
+        pfnlisten = (PFNLISTEN)GetProcAddress_(&wsock32, "listen");
+        pfnntohl = (PFNNTOHL)GetProcAddress_(&wsock32, "ntohl");
+        pfnntohs = (PFNNTOHS)GetProcAddress_(&wsock32, "ntohs");
+        pfnrecv = (PFNRECV)GetProcAddress_(&wsock32, "recv");
+        pfnrecvfrom = (PFNRECVFROM)GetProcAddress_(&wsock32, "recvfrom");
+        pfnselect = (PFNSELECT)GetProcAddress_(&wsock32, "select");
+        pfnsend = (PFNSEND)GetProcAddress_(&wsock32, "send");
+        pfnsendto = (PFNSENDTO)GetProcAddress_(&wsock32, "sendto");
+        pfnsetsockopt = (PFNSETSOCKOPT)GetProcAddress_(&wsock32, "setsockopt");
+        pfnsocket = (PFNSOCKET)GetProcAddress_(&wsock32, "socket");
+        pfnWSAAsyncSelect = (PFNWSAASYNCSELECT)GetProcAddress_(&wsock32, "WSAAsyncSelect");
+        pfnWSACleanup = (PFNWSACLEANUP)GetProcAddress_(&wsock32, "WSACleanup");
+        pfnWSAGetLastError = (PFNWSAGETLASTERROR)GetProcAddress_(&wsock32, "WSAGetLastError");
+        pfnWSAStartup = (PFNWSASTARTUP)GetProcAddress_(&wsock32, "WSAStartup");
+        pfn__WSAFDIsSet = (PFN__WSAFDISSET)GetProcAddress_(&wsock32, "__WSAFDIsSet");
+    }
+
+    if (!pfnWSAGetLastError)
+        pfnWSAGetLastError = dummy_WSAGetLastError;
 }
 
 /*!

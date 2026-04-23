@@ -22,6 +22,7 @@
 ****************************************************************************/
 
 #include <winsock2.h>
+#include <qt_windows.h>
 
 #include "qhostinfo_p.h"
 #include "qsocketlayer_p.h"
@@ -95,7 +96,7 @@ QHostInfo QHostInfoAgent::fromName(const QString &hostName)
                 switch (p->ai_family) {
                 case AF_INET: {
                     QHostAddress addr;
-		    addr.setAddress(ntohl(((sockaddr_in *) p->ai_addr)->sin_addr.s_addr));
+		    if (pfnntohl) addr.setAddress(pfnntohl(((sockaddr_in *) p->ai_addr)->sin_addr.s_addr));
                     if (!addresses.contains(addr))
                         addresses.prepend(addr);
                 }
@@ -114,7 +115,7 @@ QHostInfo QHostInfoAgent::fromName(const QString &hostName)
             }
             results.setAddresses(addresses);
             local_freeaddrinfo(res);
-        } else if (WSAGetLastError() == WSAHOST_NOT_FOUND || WSAGetLastError() == WSANO_DATA) {
+        } else if (pfnWSAGetLastError() == WSAHOST_NOT_FOUND || pfnWSAGetLastError() == WSANO_DATA) {
             results.setError(QHostInfo::HostNotFound);
             results.setErrorString(tr("Host not found"));
         } else {
@@ -123,7 +124,7 @@ QHostInfo QHostInfoAgent::fromName(const QString &hostName)
         }
     } else {
         // Fall back to gethostbyname, which only supports IPv4.
-        hostent *ent = gethostbyname(hostName.toLatin1().constData());
+        hostent *ent = (pfngethostbyname ? pfngethostbyname(hostName.toLatin1().constData()) : NULL);
         if (ent) {
             char **p;
             QList<QHostAddress> addresses;
@@ -132,7 +133,7 @@ QHostInfo QHostInfoAgent::fromName(const QString &hostName)
                 for (p = ent->h_addr_list; *p != 0; p++) {
                     long *ip4Addr = (long *) *p;
 		    QHostAddress temp;
-		    temp.setAddress(ntohl(*ip4Addr));
+		    if (pfnntohl) temp.setAddress(pfnntohl(*ip4Addr));
                     addresses << temp;
                 }
                 break;
@@ -142,7 +143,7 @@ QHostInfo QHostInfoAgent::fromName(const QString &hostName)
                 break;
             }
             results.setAddresses(addresses);
-        } else if (WSAGetLastError() == 11001) {
+        } else if (pfnWSAGetLastError() == 11001) {
             results.setErrorString(tr("Host not found"));
             results.setError(QHostInfo::HostNotFound);
         } else {
@@ -174,7 +175,7 @@ QString QHostInfo::localHostName()
     QWindowsSockInit winSock;
 
     char hostName[512];
-    if (gethostname(hostName, sizeof(hostName)) == -1)
+    if (!pfngethostname || pfngethostname(hostName, sizeof(hostName)) == -1)
         return QString();
     hostName[sizeof(hostName) - 1] = '\0';
     return QString::fromLocal8Bit(hostName);
