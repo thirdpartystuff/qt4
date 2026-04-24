@@ -91,6 +91,7 @@
 extern "C" {
 #endif
 
+bool isWinNT(void);
 bool isWin32s(void);
 bool useWide(void);
 

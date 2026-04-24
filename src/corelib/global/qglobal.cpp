@@ -123,6 +123,7 @@ PFNWSASOCKETA pfnWSASocketA;
 PFNWSASOCKETW pfnWSASocketW;
 PFNWSASTARTUP pfnWSAStartup;
 PFN__WSAFDISSET pfn__WSAFDIsSet;
+bool isWinNT(void) { return ((QSysInfo::WindowsVersion & QSysInfo::WV_DOS_based) == 0); }
 bool isWin32s(void) { return QSysInfo::WindowsVersion == QSysInfo::WV_32s; }
 bool useWide(void) { return ((QSysInfo::WindowsVersion & QSysInfo::WV_DOS_based) == 0); }
 #endif

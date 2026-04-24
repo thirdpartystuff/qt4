@@ -33,6 +33,7 @@
 #include "qabstracteventdispatcher_p.h"
 #include <private/qthread_p.h>
 #include <private/qmutexpool_p.h>
+#include "qset.h"
 
 class QEventDispatcherWin32Private;
 
@@ -119,6 +120,8 @@ public:
     void activateEventNotifier(QWinEventNotifier * wen);
 
     QList<MSG> queuedUserInputEvents;
+    QList<MSG> queuedSocketEvents;
+    QSet<QSockNot*> invokedSockNot;
 
     CRITICAL_SECTION fastTimerCriticalSection;
 };
@@ -254,7 +257,8 @@ LRESULT CALLBACK qt_internal_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
                 QSNDict *dict = sn_vec[type];
 
                 QSockNot *sn = dict ? dict->value(wp) : 0;
-                if (sn) {
+                if (sn && !d->invokedSockNot.contains(sn)) {
+                    d->invokedSockNot.insert(sn);
                     QEvent event(QEvent::SockAct);
                     QCoreApplication::sendEvent(sn->obj, &event);
                 }
@@ -392,6 +396,7 @@ bool QEventDispatcherWin32::processEvents(QEventLoop::ProcessEventsFlags flags)
                 haveMessage = true;
                 msg = d->queuedUserInputEvents.takeFirst();
             } else {
+              more:
                 haveMessage = winPeekMessage(&msg, 0, 0, 0, PM_REMOVE);
                 if (haveMessage && (flags & QEventLoop::ExcludeUserInputEvents)
                     && ((msg.message >= WM_KEYFIRST
@@ -402,6 +407,10 @@ bool QEventDispatcherWin32::processEvents(QEventLoop::ProcessEventsFlags flags)
                     // queue user input events for later processing
                     haveMessage = false;
                     d->queuedUserInputEvents.append(msg);
+                }
+                if (haveMessage && msg.message == WM_USER) {
+                    d->queuedSocketEvents.append(msg);
+                    goto more;
                 }
             }
             if (!haveMessage && !isWin32s()) {
@@ -416,6 +425,22 @@ bool QEventDispatcherWin32::processEvents(QEventLoop::ProcessEventsFlags flags)
                     // a new message has arrived, process it
                     continue;
                 }
+            }
+            if (!haveMessage && !d->queuedSocketEvents.isEmpty()) {
+                d->invokedSockNot.clear();
+                do {
+                    haveMessage = true;
+                    msg = d->queuedSocketEvents.takeFirst();
+                    if (!filterEvent(&msg)) {
+                        TranslateMessage(&msg);
+                        QT_WA({
+                            DispatchMessage(&msg);
+                        } , {
+                            DispatchMessageA(&msg);
+                        });
+                    }
+                } while (!d->queuedSocketEvents.isEmpty());
+                d->invokedSockNot.clear();
             }
             if (haveMessage) {
                 if (msg.message == WM_QUIT) {
@@ -570,7 +595,7 @@ void QEventDispatcherWin32::unregisterSocketNotifier(QSocketNotifier *notifier)
         sn_event |= FD_OOB;
     // BoundsChecker may emit a warning for WSAAsyncSelect when sn_event == 0
     // This is a BoundsChecker bug and not a Qt bug
-    pfnWSAAsyncSelect(socket, d->internalHwnd, sn_event ? WM_USER : 0, sn_event);
+    pfnWSAAsyncSelect(socket, d->internalHwnd, 0, sn_event);
   }
 /*
     fd_set        rd,wt,ex;

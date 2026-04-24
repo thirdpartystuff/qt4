@@ -188,7 +188,7 @@ static inline void qt_socket_getPortAndAddress(SOCKET socketDescriptor, struct s
 	if (address)
 	    *address = a;
         if (port)
-	    *port = (pfnntohs ? pfnntohs(sa6->sin6_port) : 0);//WSANtohs(socketDescriptor, sa6->sin6_port, port);
+            *port = (pfnntohs ? pfnntohs(sa6->sin6_port) : 0);//WSANtohs(socketDescriptor, sa6->sin6_port, port);
     } else
 #endif
     if (sa->sa_family == AF_INET) {
@@ -200,7 +200,7 @@ static inline void qt_socket_getPortAndAddress(SOCKET socketDescriptor, struct s
 	if (address)
 	    *address = a;
         if (port)
-	    *port = (pfnntohs ? pfnntohs(sa4->sin_port) : 0);//WSANtohs(socketDescriptor, sa4->sin_port, port);
+            *port = (pfnntohs ? pfnntohs(sa4->sin_port) : 0);//WSANtohs(socketDescriptor, sa4->sin_port, port);
     }
 }
 
@@ -538,9 +538,9 @@ bool QSocketLayerPrivate::nativeConnect(const QHostAddress &address, quint16 por
     forever {
         int connectResult;
         if (pfnWSAConnect)
-            connectResult = ::pfnWSAConnect(socketDescriptor, sockAddrPtr, sockAddrSize, 0,0,0,0);
+            connectResult = pfnWSAConnect(socketDescriptor, sockAddrPtr, sockAddrSize, 0,0,0,0);
         else if (pfnconnect)
-            connectResult = ::pfnconnect(socketDescriptor, sockAddrPtr, sockAddrSize);
+            connectResult = pfnconnect(socketDescriptor, sockAddrPtr, sockAddrSize);
         else {
             setError(QAbstractSocket::NetworkError, InvalidSocketErrorString);
             return false;
@@ -1001,7 +1001,7 @@ qint64 QSocketLayerPrivate::nativeWrite(const char *data, qint64 len)
     qint64 ret = 0;
     // don't send more than 49152 per call to WSASendTo to avoid getting a WSAENOBUFS
     for (;;) {
-        qint64 bytesToSend = qMin<qint64>(49152, len - ret);
+        qint64 bytesToSend = qMin<qint64>((isWin32s() ? 16384 : 49152), len - ret);
         WSABUF buf;
         buf.buf = (char*)data + ret;
         buf.len = bytesToSend;
@@ -1024,7 +1024,7 @@ qint64 QSocketLayerPrivate::nativeWrite(const char *data, qint64 len)
         ret += qint64(bytesWritten);
 
         if (socketRet != SOCKET_ERROR) {
-            if (ret == len)
+            if (bytesWritten == 0 || ret == len)
                 break;
             else
                 continue;
@@ -1068,6 +1068,8 @@ qint64 QSocketLayerPrivate::nativeRead(char *data, qint64 maxLength)
     if (pfnWSARecv)
         r = pfnWSARecv(socketDescriptor, &buf, 1, &bytesRead, &flags, 0,0);
     else if (pfnrecv) {
+        if (isWin32s() && maxLength > 16384)
+            maxLength = 16384;
         r = pfnrecv(socketDescriptor, data, maxLength, (int)flags);
         if (r != SOCKET_ERROR)
             bytesRead = (DWORD)r;
@@ -1166,7 +1168,7 @@ void QSocketLayerPrivate::nativeClose()
     qDebug("QSocketLayerPrivate::nativeClose()");
 #endif
     if (pfnclosesocket)
-        ::pfnclosesocket(socketDescriptor);
+        pfnclosesocket(socketDescriptor);
 }
 
 

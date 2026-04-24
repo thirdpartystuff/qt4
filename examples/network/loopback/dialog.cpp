@@ -110,8 +110,10 @@ void Dialog::startTransfer()
 
 void Dialog::updateServerProgress()
 {
-    bytesReceived += (int)tcpServerConnection->bytesAvailable();
-    tcpServerConnection->readAll();
+    while (tcpServerConnection->bytesAvailable()) {
+        QByteArray data = tcpServerConnection->readAll();
+        bytesReceived += (int)data.size();
+    }
 
     serverProgressBar->setMaximum(TotalBytes);
     serverProgressBar->setValue(bytesReceived);
@@ -120,6 +122,7 @@ void Dialog::updateServerProgress()
 
     if (bytesReceived == TotalBytes) {
         tcpServerConnection->close();
+        tcpClient.close();
         startButton->setEnabled(true);
         QApplication::restoreOverrideCursor();
     }
