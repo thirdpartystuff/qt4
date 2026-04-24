@@ -1738,9 +1738,12 @@ QString qt_error_string(int errorCode)
 {
     const char *s = 0;
     QString ret;
+    QString sep;
     if (errorCode == -1) {
 #if defined(Q_OS_WIN32)
         errorCode = GetLastError();
+        ret.sprintf("%08X", errorCode);
+        sep = QString::fromLatin1(", ");
 #else
         errorCode = errno;
 #endif
@@ -1762,7 +1765,7 @@ QString qt_error_string(int errorCode)
         break;
     default: {
 #ifdef Q_OS_WIN
-        QT_WA({
+        if (useWide()) {
             unsigned short *string = 0;
             FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,
                           NULL,
@@ -1771,9 +1774,9 @@ QString qt_error_string(int errorCode)
                           (LPTSTR)&string,
                           0,
                           NULL);
-            ret = QString::fromUtf16(string);
+            if (string && *string) { ret += sep; ret += QString::fromUtf16(string); }
             LocalFree((HLOCAL)string);
-        }, {
+        } else {
             char *string = 0;
             FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,
                            NULL,
@@ -1782,9 +1785,9 @@ QString qt_error_string(int errorCode)
                            (LPSTR)&string,
                            0,
                            NULL);
-            ret = QString::fromLocal8Bit(string);
+            if (string && *string) { ret += sep; ret += QString::fromLocal8Bit(string); }
             LocalFree((HLOCAL)string);
-        });
+        }
 #else
         ret = QString::fromLocal8Bit(strerror(errorCode));
 #endif
@@ -1793,7 +1796,7 @@ QString qt_error_string(int errorCode)
     if (s)
         // ######## this breaks moc build currently
 //         ret = QCoreApplication::translate("QIODevice", s);
-        ret = QString::fromLatin1(s);
+        { ret += sep; ret += QString::fromLatin1(s); }
     return ret.trimmed();
 }
 
