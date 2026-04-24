@@ -47,6 +47,10 @@
 
 #include <limits.h>
 
+#ifdef Q_OS_WIN
+#include <qt_windows.h>
+#endif
+
 /*!
     \class QCommonStyle
     \brief The QCommonStyle class encapsulates the common Look and Feel of a GUI.
@@ -3184,6 +3188,12 @@ int QCommonStyle::styleHint(StyleHint sh, const QStyleOption *opt, const QWidget
         break;
 #ifndef QT_NO_RUBBERBAND
     case SH_RubberBand_Mask:
+      #ifdef Q_OS_WIN
+        if (!pfnSetWindowRgn || isWin32s()) {
+            ret = 0;
+            break;
+        }
+      #endif
         if (const QStyleOptionRubberBand *rbOpt = qstyleoption_cast<const QStyleOptionRubberBand *>(opt)) {
             ret = 0;
             if (rbOpt->shape == QRubberBand::Rectangle) {
