@@ -132,16 +132,20 @@ QEventDispatcherWin32Private::QEventDispatcherWin32Private()
     resolveTimerAPI();
     InitializeCriticalSection(&fastTimerCriticalSection);
 
+  if (!isWin32s()) {
     wakeUpNotifier.setHandle((useWide() ? CreateEventW(0, false, false, 0) :
                                           CreateEventA(0, false, false, 0)));
     if (!wakeUpNotifier.handle())
         qWarning("QEventDispatcherWin32Private::QEventDispatcherWin32Private(): Creating wakeup event failed");
+  }
 }
 
 QEventDispatcherWin32Private::~QEventDispatcherWin32Private()
 {
+  if (!isWin32s()) {
     wakeUpNotifier.setEnabled(false);
     CloseHandle(wakeUpNotifier.handle());
+  }
 
     DeleteCriticalSection(&fastTimerCriticalSection);
 }
@@ -197,11 +201,11 @@ void WINAPI CALLBACK qt_fast_timer_proc(uint timerId, uint /*reserved*/, DWORD_P
     if (!t->pendingEvent) {
         t->pendingEvent = true;
 
-        QT_WA({
+        if (useWide()) {
             PostMessageW(t->dispatcher->internalHwnd, WM_TIMER, WPARAM(t->ind), 0);
-        }, {
+        } else {
             PostMessageA(t->dispatcher->internalHwnd, WM_TIMER, WPARAM(t->ind), 0);
-        });
+        }
 
     }
     LeaveCriticalSection(&t->dispatcher->fastTimerCriticalSection);
@@ -319,10 +323,24 @@ static HWND qt_create_internal_window(QEventDispatcherWin32 *eventDispatcher)
     wc.hCursor = 0;
     wc.hbrBackground = (HBRUSH) COLOR_BACKGROUND;
     wc.lpszMenuName = NULL;
-    wc.lpszClassName = "QEventDispatcherWin32_Internal_Widget";
-    RegisterClassA(&wc);
+    if (useWide()) {
+        wc.lpszClassName = (LPCSTR)L"QEventDispatcherWin32_Internal_Widget";
+        RegisterClassW((WNDCLASSW*)&wc);
+    } else {
+        wc.lpszClassName = "QEventDispatcherWin32_Internal_Widget";
+        RegisterClassA(&wc);
+    }
 
-    HWND wnd = CreateWindowA(wc.lpszClassName,  // classname
+    HWND wnd = useWide()
+             ? CreateWindowW((LPCWSTR)wc.lpszClassName,
+                             (LPCWSTR)wc.lpszClassName,
+                             0,                 // style
+                             0, 0, 0, 0,        // geometry
+                             0,                 // parent
+                             0,                 // menu handle
+                             hi,                // application
+                             0)                 // windows creation data.
+             : CreateWindowA(wc.lpszClassName,  // classname
                              wc.lpszClassName,  // window name
                              0,                 // style
                              0, 0, 0, 0,        // geometry
@@ -330,16 +348,19 @@ static HWND qt_create_internal_window(QEventDispatcherWin32 *eventDispatcher)
                              0,                 // menu handle
                              hi,                // application
                              0);                // windows creation data.
-
-#ifdef GWLP_USERDATA
-    SetWindowLongPtrA(wnd, GWLP_USERDATA, (LONG_PTR)eventDispatcher);
-#else
-    SetWindowLongA(wnd, GWL_USERDATA, (LONG)eventDispatcher);
-#endif
-
     if (!wnd) {
         qFatal("Failed to create QEventDispatcherWin32 internal window: %d\n", (int)GetLastError());
     }
+
+#ifdef _WIN64
+    SetWindowLongPtrW(wnd, GWLP_USERDATA, (LONG_PTR)eventDispatcher);
+#else
+    if (useWide())
+        SetWindowLongW(wnd, GWL_USERDATA, (LONG)eventDispatcher);
+    else
+        SetWindowLongA(wnd, GWL_USERDATA, (LONG)eventDispatcher);
+#endif
+
     return wnd;
 }
 
@@ -630,7 +651,7 @@ void QEventDispatcherWin32::registerTimer(int timerId, int interval, QObject *ob
     if (interval > 10 || !interval || !qtimeSetEvent) {
         ok = 1;
         if (!interval)  // optimization for single-shot-zero-timer
-            QT_WA_INLINE(PostMessageW(d->internalHwnd, WM_TIMER, WPARAM(t->ind), 0),            
+            (useWide() ? PostMessageW(d->internalHwnd, WM_TIMER, WPARAM(t->ind), 0) :
                          PostMessageA(d->internalHwnd, WM_TIMER, WPARAM(t->ind), 0));
         
         ok = SetTimer(d->internalHwnd, t->ind, (uint) interval, 0);        
@@ -763,6 +784,10 @@ void QEventDispatcherWin32::activateEventNotifiers()
 void QEventDispatcherWin32::wakeUp()
 {
     Q_D(QEventDispatcherWin32);
+    if (isWin32s()) {
+        PostMessageA(d->internalHwnd, WM_NULL, 0, 0);
+        return;
+    }
     SetEvent(d->wakeUpNotifier.handle());
 }
 
@@ -780,6 +805,7 @@ void QEventDispatcherWin32::flush()
 void QEventDispatcherWin32::startingUp()
 {
     Q_D(QEventDispatcherWin32);
-
+    if (isWin32s())
+        return;
     if (d->wakeUpNotifier.handle()) d->wakeUpNotifier.setEnabled(true);
 }
