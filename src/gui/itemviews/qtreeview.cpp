@@ -1105,7 +1105,11 @@ void QTreeView::scrollContentsBy(int dx, int dy)
         int currentViewIndex = currentScrollbarValue / steps; // the first visible item
         int previousViewIndex = previousScrollbarValue / steps;
 
-        const QVector<QTreeViewItem> viewItems = d->viewItems;
+        const QVector<QTreeViewItem>& viewItems = d->viewItems;
+        if (currentViewIndex >= viewItems.size())
+            currentViewIndex = viewItems.size() - 1;
+        if (previousViewIndex >= viewItems.size())
+            previousViewIndex = viewItems.size() - 1;
 
         int currentY = d->topItemDelta(currentScrollbarValue, d->height(currentViewIndex));
         int previousY = d->topItemDelta(previousScrollbarValue, d->height(previousViewIndex));
