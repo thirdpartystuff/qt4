@@ -115,23 +115,26 @@ HBITMAP QPixmap::toWinHBITMAP(HBitmapFormat format) const
     memset(&bmi, 0, sizeof(bmi));
     bmi.bmiHeader.biSize        = sizeof(BITMAPINFOHEADER);
     bmi.bmiHeader.biWidth       = w;
-    bmi.bmiHeader.biHeight      = -h;
     bmi.bmiHeader.biPlanes      = 1;
-    bmi.bmiHeader.biBitCount    = 32;
     bmi.bmiHeader.biCompression = BI_RGB;
-    bmi.bmiHeader.biSizeImage   = w * h * 4;
 
     // Create the pixmap
     uchar *pixels = 0;
+    int rowWidth = (w * 3 + 3) & ~3;
     HBITMAP bitmap;
     if (pfnCreateDIBSection) {
+        bmi.bmiHeader.biBitCount = 32;
+        bmi.bmiHeader.biHeight = -h;
         bitmap = pfnCreateDIBSection(display_dc, &bmi, DIB_RGB_COLORS, (void **) &pixels, 0, 0);
         if (!bitmap) {
             qErrnoWarning("QPixmap::toWinHBITMAP(), failed to create dibsection");
             return 0;
         }
-    } else
-        pixels = new uchar[w * h * 4];
+    } else {
+        bmi.bmiHeader.biBitCount = 24;
+        bmi.bmiHeader.biHeight = h;
+        pixels = (uchar*)GlobalAlloc(GPTR, rowWidth * h);
+    }
     if (!pixels) {
         qErrnoWarning("QPixmap::toWinHBITMAP(), did not allocate pixel data");
         return 0;
@@ -142,18 +145,29 @@ HBITMAP QPixmap::toWinHBITMAP(HBitmapFormat format) const
                                  ? QImage::Format_RGB32
                                  : QImage::Format_ARGB32_Premultiplied;
     const QImage image = data->image.convertToFormat(imageFormat);
-    int bytes_per_line = w * 4;
-    for (int y=0; y<h; ++y)
-        memcpy(pixels + y * bytes_per_line, image.scanLine(y), bytes_per_line);
 
     if (!pfnCreateDIBSection) {
+        for (int y = 0; y < h; ++y) {
+            uchar* dst = &pixels[(h - y - 1) * rowWidth];
+            const uchar* src = image.scanLine(y);
+            for (int x = 0; x < w; x++) {
+                *dst++ = *src++;
+                *dst++ = *src++;
+                *dst++ = *src++;
+                ++src;
+            }
+        }
         bitmap = CreateDIBitmap(display_dc, &bmi.bmiHeader, CBM_INIT, pixels, &bmi, DIB_RGB_COLORS);
         if (!bitmap) {
-            qErrnoWarning("QPixmap::toWinHBITMAP(), failed to create dibsection");
+            qErrnoWarning("QPixmap::toWinHBITMAP(), failed to create dibitmap");
             delete[] pixels;
             return 0;
         }
-        delete[] pixels;
+        GlobalFree(pixels);
+    } else {
+        int bytes_per_line = w * 4;
+        for (int y = 0; y < h; ++y)
+            memcpy(pixels + y * bytes_per_line, image.scanLine(y), bytes_per_line);
     }
 
     return bitmap;
