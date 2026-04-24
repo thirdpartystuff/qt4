@@ -210,14 +210,26 @@ class QRasterBuffer
 {
 public:
 #if defined(Q_WS_WIN)
-    QRasterBuffer() : m_hdc(0), m_bitmap(0), m_bufferAllocated(false), m_width(0), m_height(0), m_buffer(0) { init(); }
+    explicit QRasterBuffer(bool drawToBitmap)
+        : m_hdc(0)
+        , m_bitmap(0)
+        , m_oldBitmap(0)
+        , m_bufferAllocated(false)
+        , m_drawToBitmap(drawToBitmap)
+        , m_width(0)
+        , m_height(0)
+        , m_buffer(0)
+    {
+        init();
+    }
 
     HDC hdc() const { return m_hdc; }
-    void bitBlt(HDC hDstDC, int dstX, int dstY, int cx, int cy, HDC hSrcDC, int srcX, int srcY, quint32 rop);
+    void bitBlt(HDC hDstDC, int dstX, int dstY, int cx, int cy, int srcX, int srcY);
+    void readDIBits();
 #elif defined(Q_WS_X11)
-    QRasterBuffer() : m_bufferAllocated(false), m_width(0), m_height(0), m_buffer(0) { init(); }
+    QRasterBuffer(bool) : m_bufferAllocated(false), m_width(0), m_height(0), m_buffer(0) { init(); }
 #elif defined(Q_WS_MAC)
-    QRasterBuffer() : m_data(0), m_width(0), m_height(0), m_buffer(0) { init(); }
+    QRasterBuffer(bool) : m_data(0), m_width(0), m_height(0), m_buffer(0) { init(); }
 # if defined(QMAC_NO_COREGRAPHICS)
     GWorldPtr m_data;
 # else
@@ -265,10 +277,13 @@ public:
 private:
 #if defined(Q_WS_WIN)
     HDC m_hdc;
+    HBITMAP m_oldBitmap;
     HBITMAP m_bitmap;
 #endif
 #if defined(Q_WS_WIN) || defined(Q_WS_X11)
     bool m_bufferAllocated;
+    bool m_drawToBitmap;
+    void allocBuffer(int width, int height);
 #endif
 
     int m_width;

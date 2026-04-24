@@ -455,8 +455,8 @@ QRasterPaintEngine::QRasterPaintEngine()
 {
     Q_D(QRasterPaintEngine);
 
-    d->rasterBuffer = new QRasterBuffer();
-    d->fontRasterBuffer = new QRasterBuffer();
+    d->rasterBuffer = new QRasterBuffer(false);
+    d->fontRasterBuffer = new QRasterBuffer(true);
     d->outlineMapper = new QFTOutlineMapper;
     if (!qt_gray_raster || !qt_black_raster) {
         qt_initialize_ft();
@@ -483,8 +483,8 @@ QRasterPaintEngine::QRasterPaintEngine(QRasterPaintEnginePrivate &dd)
 {
     Q_D(QRasterPaintEngine);
 
-    d->rasterBuffer = new QRasterBuffer();
-    d->fontRasterBuffer = new QRasterBuffer();
+    d->rasterBuffer = new QRasterBuffer(false);
+    d->fontRasterBuffer = new QRasterBuffer(true);
     d->outlineMapper = new QFTOutlineMapper;
     if (!qt_gray_raster || !qt_black_raster) {
         qt_initialize_ft();
@@ -682,15 +682,14 @@ void QRasterPaintEngine::flush(QPaintDevice *device, const QPoint &offset)
         if (sysClip.isEmpty()) {
             d->rasterBuffer->bitBlt(hdc, d->deviceRect.x() + offset.x(), d->deviceRect.y() + offset.y(),
                    d->deviceRect.width(), d->deviceRect.height(),
-                   d->rasterBuffer->hdc(), 0, 0, SRCCOPY);
+                   0, 0);
         } else {
             QVector<QRect> rects = sysClip.rects();
             for (int i=0; i<rects.size(); ++i) {
                 QRect r = rects.at(i);
                 d->rasterBuffer->bitBlt(hdc,
                        r.x() + offset.x(), r.y() + offset.y(), r.width(), r.height(),
-                       d->rasterBuffer->hdc(), r.x() - d->deviceRect.x(), r.y() - d->deviceRect.y(),
-                       SRCCOPY);
+                       r.x() - d->deviceRect.x(), r.y() - d->deviceRect.y());
             }
         }
         device->releaseDC(hdc);
@@ -1553,6 +1552,7 @@ void QRasterPaintEngine::drawTextItem(const QPointF &p, const QTextItem &textIte
         // Fill buffer with stuff
         qt_draw_text_item(QPoint(0, ti.ascent), ti, d->fontRasterBuffer->hdc(), d);
     }
+    d->fontRasterBuffer->readDIBits();
 
     // Boundaries
     int ymax = qMin(devRect.y() + devRect.height(), d->rasterBuffer->height());
@@ -2149,6 +2149,7 @@ QRasterBuffer::~QRasterBuffer()
 #if defined (Q_WS_WIN)
     if (m_bitmap || m_hdc) {
         Q_ASSERT(m_hdc);
+        if (m_oldBitmap) SelectObject(m_hdc, m_oldBitmap);
         DeleteDC(m_hdc);
         if (m_bitmap) DeleteObject(m_bitmap);
     }
@@ -2230,58 +2231,180 @@ void QRasterBuffer::prepareClip(int /*width*/, int height)
 
 void QRasterBuffer::resetBuffer(int val)
 {
+#ifdef Q_WS_WIN
+    if (m_drawToBitmap) {
+        Q_ASSERT(val == 255);
+        Q_ASSERT(m_hdc);
+        SelectObject(m_hdc, GetStockObject(WHITE_BRUSH));
+        SelectObject(m_hdc, GetStockObject(NULL_PEN));
+        Rectangle(m_hdc, 0, 0, m_width + 1, m_height + 1);
+        return;
+    }
+#endif
+
     memset(m_buffer, val, m_width*m_height*sizeof(uint));
 }
 
-#if defined(Q_WS_WIN)
-void QRasterBuffer::prepareBuffer(int width, int height)
-{
-    BITMAPINFO bmi;
-    memset(&bmi, 0, sizeof(bmi));
-    bmi.bmiHeader.biSize        = sizeof(BITMAPINFOHEADER);
-    bmi.bmiHeader.biWidth       = width;
-    bmi.bmiHeader.biHeight      = -height;
-    bmi.bmiHeader.biPlanes      = 1;
-    bmi.bmiHeader.biBitCount    = 32;
-    bmi.bmiHeader.biCompression = BI_RGB;
-    bmi.bmiHeader.biSizeImage   = 0;
-
-    HDC displayDC = GetDC(0);
-
-    // a little bit of cleanup...
-    if (m_bitmap || m_hdc) {
-        Q_ASSERT(m_hdc);
-        DeleteDC(m_hdc);
-        if (m_bitmap) DeleteObject(m_bitmap);
-    }
-
-    m_hdc = CreateCompatibleDC(displayDC);
-    Q_ASSERT(m_hdc);
-
-    m_buffer = 0;
-    m_bitmap = CreateDIBSection(m_hdc, &bmi, DIB_RGB_COLORS, (void**) &m_buffer, 0, 0);
-    Q_ASSERT(m_bitmap);
-    Q_ASSERT(m_buffer);
-    GdiFlush();
-
-    SelectObject(m_hdc, m_bitmap);
-
-    ReleaseDC(0, displayDC);
-}
-void QRasterBuffer::bitBlt(HDC hDstDC, int dstX, int dstY, int cx, int cy, HDC hSrcDC, int srcX, int srcY, quint32 rop)
-{
-    BitBlt(hDstDC, dstX, dstY, cx, cy, hSrcDC, srcX, srcY, rop);
-}
-#elif defined(Q_WS_X11)
-void QRasterBuffer::prepareBuffer(int width, int height)
+#if defined(Q_WS_WIN) || defined(Q_WS_X11)
+void QRasterBuffer::allocBuffer(int width, int height)
 {
     if (m_bufferAllocated) {
         delete[] m_buffer;
         m_bufferAllocated = false;
     }
     m_buffer = new uchar[width*height*sizeof(uint)];
-    memset(m_buffer, 255, width*height*sizeof(uint));
     m_bufferAllocated = true;
+}
+#endif
+
+#if defined(Q_WS_WIN)
+void QRasterBuffer::prepareBuffer(int width, int height)
+{
+    HDC displayDC = GetDC(0);
+
+    // a little bit of cleanup...
+    if (m_bitmap || m_hdc) {
+        Q_ASSERT(m_hdc);
+        if (m_oldBitmap) SelectObject(m_hdc, m_oldBitmap);
+        DeleteDC(m_hdc);
+        if (m_bitmap) DeleteObject(m_bitmap);
+        m_oldBitmap = NULL;
+        m_bitmap = NULL;
+        m_hdc = NULL;
+    }
+
+    m_hdc = CreateCompatibleDC(displayDC);
+    Q_ASSERT(m_hdc);
+
+    m_buffer = 0;
+    if (m_drawToBitmap) {
+        if (!pfnCreateDIBSection) {
+            m_bitmap = CreateCompatibleBitmap(displayDC, width, height);
+            allocBuffer(width, height);
+        } else {
+            BITMAPINFO bmi;
+            memset(&bmi, 0, sizeof(bmi));
+            bmi.bmiHeader.biSize     = sizeof(BITMAPINFOHEADER);
+            bmi.bmiHeader.biWidth    = width;
+            bmi.bmiHeader.biHeight   = -height;
+            bmi.bmiHeader.biPlanes   = 1;
+            bmi.bmiHeader.biBitCount = 32;
+            m_bitmap = pfnCreateDIBSection(displayDC, &bmi, DIB_RGB_COLORS, (void**)&m_buffer, 0, 0);
+        }
+        Q_ASSERT(m_bitmap);
+    } else {
+        allocBuffer(width, height);
+    }
+    Q_ASSERT(m_buffer);
+    GdiFlush();
+
+    if (m_bitmap)
+        m_oldBitmap = (HBITMAP)SelectObject(m_hdc, m_bitmap);
+
+    ReleaseDC(0, displayDC);
+}
+void QRasterBuffer::bitBlt(HDC hDstDC, int dstX, int dstY, int cx, int cy, int srcX, int srcY)
+{
+    Q_ASSERT(!m_drawToBitmap);
+
+    BITMAPINFO bmi;
+    memset(&bmi, 0, sizeof(bmi));
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biPlanes = 1;
+
+    char* buf;
+    if (isWinNT()) {
+        bmi.bmiHeader.biWidth = m_width;
+        bmi.bmiHeader.biHeight = -m_height;
+        bmi.bmiHeader.biBitCount = 32;
+        buf = (char*)m_buffer;
+    } else {
+        bmi.bmiHeader.biWidth = cx;
+        bmi.bmiHeader.biHeight = cy;
+        bmi.bmiHeader.biBitCount = 24;
+        const char* src = (const char*)m_buffer + (srcX + srcY * m_width) * sizeof(uint);
+        int rowBytes = (cx * 3 + 3) & ~3;
+        buf = (char*)GlobalAlloc(GPTR, rowBytes * cy);
+        for (int y = 0; y < cy; y++) {
+            char* dst = &buf[rowBytes * (cy - y - 1)];
+            for (int x = 0; x < cx; x++) {
+                *dst++ = *src++;
+                *dst++ = *src++;
+                *dst++ = *src++;
+                ++src;
+            }
+            src += (m_width - cx) * 4;
+        }
+        srcX = 0;
+        srcY = 0;
+    }
+
+    int scanStart = 0, scanCount = cy;
+    for (;;) {
+        int paintedH = SetDIBitsToDevice(hDstDC, dstX, dstY, cx, cy,
+            srcX, srcY, scanStart, scanCount, buf, &bmi, DIB_RGB_COLORS);
+        if (paintedH >= cy)
+            break;
+        if (paintedH == 0) {
+            qWarning("SetDIBitsToDevice failed %08X! (%p, %d, %d, %d, %d, %d, %d) => %d",
+                GetLastError(), hDstDC, dstX, dstY, cx, cy, scanStart, scanCount, paintedH);
+            break;
+        }
+        srcY += paintedH;
+        dstY += paintedH;
+        cy -= paintedH;
+        scanStart += paintedH;
+        scanCount -= paintedH;
+    }
+
+    if (!isWinNT())
+        GlobalFree(buf);
+}
+void QRasterBuffer::readDIBits()
+{
+    Q_ASSERT(m_drawToBitmap);
+    if (pfnCreateDIBSection)
+        return;
+
+    Q_ASSERT(m_hdc);
+    Q_ASSERT(m_bitmap);
+    Q_ASSERT(m_buffer);
+
+    BITMAPINFO bmi;
+    memset(&bmi, 0, sizeof(bmi));
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biPlanes = 1;
+
+    if (!isWin32s()) {
+        bmi.bmiHeader.biWidth = m_width;
+        bmi.bmiHeader.biHeight = -m_height;
+        bmi.bmiHeader.biBitCount = 32;
+        GetDIBits(m_hdc, m_bitmap, 0, m_height, m_buffer, &bmi, DIB_RGB_COLORS);
+    } else {
+        bmi.bmiHeader.biWidth = m_width;
+        bmi.bmiHeader.biHeight = m_height;
+        bmi.bmiHeader.biBitCount = 24;
+        int rowBytes = (m_width * 3 + 3) & ~3;
+        char* buf = new char[rowBytes * m_height]; // FIXME
+        GetDIBits(m_hdc, m_bitmap, 0, m_height, buf, &bmi, DIB_RGB_COLORS);
+        char* dst = (char*)m_buffer;
+        for (int y = 0; y < m_height; y++) {
+            const char* src = &buf[rowBytes * (m_height - y - 1)];
+            for (int x = 0; x < m_width; x++) {
+                *dst++ = *src++;
+                *dst++ = *src++;
+                *dst++ = *src++;
+                *dst++ = 0xff;
+            }
+        }
+        delete[] buf;
+    }
+}
+#elif defined(Q_WS_X11)
+void QRasterBuffer::prepareBuffer(int width, int height)
+{
+    allocBuffer(width, height);
+    memset(m_buffer, 255, width*height*sizeof(uint));
 }
 #elif defined(Q_WS_MAC)
 static void qt_mac_raster_data_free(void *memory, const void *, size_t)
