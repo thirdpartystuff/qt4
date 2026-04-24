@@ -42,8 +42,6 @@
 #include <private/qwininputcontext_p.h>
 #include <private/qpaintengine_raster_p.h>
 
-typedef BOOL    (WINAPI *PtrSetLayeredWindowAttributes)(HWND hwnd, COLORREF crKey, BYTE bAlpha, DWORD dwFlags);
-static PtrSetLayeredWindowAttributes ptrSetLayeredWindowAttributes = 0;
 #define Q_WS_EX_LAYERED           0x00080000 // copied from WS_EX_LAYERED in winuser.h
 #define Q_LWA_ALPHA               0x00000002 // copied from LWA_ALPHA in winuser.h
 
@@ -251,7 +249,7 @@ void QWidgetPrivate::create_sys(WId window, bool initializeWindow, bool destroyO
     if (desktop) {                                // desktop widget
         popup = false;                                // force this flags off
 #ifndef Q_OS_TEMP
-        if (QSysInfo::WindowsVersion != QSysInfo::WV_NT && QSysInfo::WindowsVersion != QSysInfo::WV_95)
+        if (QSysInfo::WindowsVersion != QSysInfo::WV_NT && QSysInfo::WindowsVersion != QSysInfo::WV_95 && QSysInfo::WindowsVersion != QSysInfo::WV_32s)
             data.crect.setRect(GetSystemMetrics(76 /* SM_XVIRTUALSCREEN  */), GetSystemMetrics(77 /* SM_YVIRTUALSCREEN  */),
                            GetSystemMetrics(78 /* SM_CXVIRTUALSCREEN */), GetSystemMetrics(79 /* SM_CYVIRTUALSCREEN */));
         else
@@ -1515,7 +1513,8 @@ void QWidget::setMask(const QRegion &region)
     // Since SetWindowRegion takes ownership, and we need to translate,
     // we take a copy.
   if (!pfnSetWindowRgn)
-    qWarning("QWidget::setMask: SetWindowRgn is not supported.");
+    qWarning("QWidget::setMask(%s, %s): SetWindowRgn is not supported.",
+        metaObject()->className(), qPrintable(windowTitle()));
   else {
     HRGN wr = CreateRectRgn(0,0,0,0);
     CombineRgn(wr, region.handle(), 0, RGN_COPY);
@@ -1580,15 +1579,7 @@ void QWidget::setWindowOpacity(qreal level)
     if(!isWindow())
         return;
 
-    static bool function_resolved = false;
-    if (!function_resolved) {
-        ptrSetLayeredWindowAttributes =
-            (PtrSetLayeredWindowAttributes) QLibrary::resolve("user32",
-                                                              "SetLayeredWindowAttributes");
-        function_resolved = true;
-    }
-
-    if (!ptrSetLayeredWindowAttributes)
+    if (!pfnSetLayeredWindowAttributes)
         return;
 
     level = qMin<qreal>(qMax<qreal>(level, 0), 1.0);
@@ -1601,7 +1592,7 @@ void QWidget::setWindowOpacity(qreal level)
         SetWindowLongA(winId(), GWL_EXSTYLE, wl & ~Q_WS_EX_LAYERED);
     }
 
-    (*ptrSetLayeredWindowAttributes)(winId(), 0, (int)(level * 255), Q_LWA_ALPHA);
+    pfnSetLayeredWindowAttributes(winId(), 0, (int)(level * 255), Q_LWA_ALPHA);
     d->topData()->opacity = (uchar)(level * 255);
 }
 

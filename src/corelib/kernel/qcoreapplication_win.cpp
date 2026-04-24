@@ -330,9 +330,13 @@ void qWinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdParam,
     }
 
     if (GetModuleHandle_(&user32)) {
+        pfnEnumDisplayMonitors = (PFNENUMDISPLAYMONITORS)GetProcAddress_(&user32, "EnumDisplayMonitors");
+        pfnGetMonitorInfoA = (PFNGETMONITORINFOA)GetProcAddressA(&user32, "GetMonitorInfoA");
+        pfnGetMonitorInfoW = (PFNGETMONITORINFOW)GetProcAddressW(&user32, "GetMonitorInfoW");
         pfnGetWindowRgn = (PFNGETWINDOWRGN)GetProcAddress_(&user32, "GetWindowRgn");
-        pfnSetWindowRgn = (PFNSETWINDOWRGN)GetProcAddress_(&user32, "SetWindowRgn");
         pfnMsgWaitForMultipleObjectsEx = (PFNMSGWAITFORMULTIPLEOBJECTSEX)GetProcAddress_(&user32, "MsgWaitForMultipleObjectsEx");
+        pfnSetLayeredWindowAttributes = (PFNSETLAYEREDWINDOWATTRIBUTES)GetProcAddress_(&user32, "SetLayeredWindowAttributes");
+        pfnSetWindowRgn = (PFNSETWINDOWRGN)GetProcAddress_(&user32, "SetWindowRgn");
     }
 
     if (GetModuleHandle_(&gdi32)) {
