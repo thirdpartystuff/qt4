@@ -2321,11 +2321,13 @@ void QRasterBuffer::bitBlt(HDC hDstDC, int dstX, int dstY, int cx, int cy, int s
         return;
 
     char* buf;
-    if (isWinNT()) {
+    bool use32 = !isWin32s();
+    if (use32) {
         bmi.bmiHeader.biWidth = m_width;
-        bmi.bmiHeader.biHeight = -m_height;
+        bmi.bmiHeader.biHeight = -cy;
         bmi.bmiHeader.biBitCount = 32;
-        buf = (char*)m_buffer;
+        buf = (char*)m_buffer + srcY * m_width * sizeof(uint);
+        srcY = 0;
     } else {
         bmi.bmiHeader.biWidth = cx;
         bmi.bmiHeader.biHeight = cy;
@@ -2333,6 +2335,8 @@ void QRasterBuffer::bitBlt(HDC hDstDC, int dstX, int dstY, int cx, int cy, int s
         const char* src = (const char*)m_buffer + (srcX + srcY * m_width) * sizeof(uint);
         int rowBytes = (cx * 3 + 3) & ~3;
         buf = (char*)GlobalAlloc(GPTR, rowBytes * cy);
+        if (!buf)
+            return;
         for (int y = 0; y < cy; y++) {
             char* dst = &buf[rowBytes * (cy - y - 1)];
             for (int x = 0; x < cx; x++) {
@@ -2365,7 +2369,7 @@ void QRasterBuffer::bitBlt(HDC hDstDC, int dstX, int dstY, int cx, int cy, int s
         scanCount -= paintedH;
     }
 
-    if (!isWinNT())
+    if (!use32)
         GlobalFree(buf);
 }
 void QRasterBuffer::readDIBits()
