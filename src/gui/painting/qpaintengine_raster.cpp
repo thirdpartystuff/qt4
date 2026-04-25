@@ -2312,6 +2312,14 @@ void QRasterBuffer::bitBlt(HDC hDstDC, int dstX, int dstY, int cx, int cy, int s
     bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     bmi.bmiHeader.biPlanes = 1;
 
+    if (srcX < 0) {
+        int dx = -srcX;
+        srcX += dx;
+        cx -= dx;
+    }
+    if (cx <= 0)
+        return;
+
     char* buf;
     if (isWinNT()) {
         bmi.bmiHeader.biWidth = m_width;
