@@ -402,17 +402,6 @@ static void qt_set_windows_resources()
         smallTitleFont = qt_LOGFONTtoQFont((LOGFONT&)ncm.lfSmCaptionFont,true,'A');
     }
 
-   #ifndef QT_NO_DEBUG
-    qDebug("note: Using SPI_GETNONCLIENTMETRICS for fonts.");
-   #endif
-    QApplication::setFont(menuFont, "QMenu");
-    QApplication::setFont(menuFont, "QMenuBar");
-    QApplication::setFont(messageFont, "QMessageBox");
-    QApplication::setFont(statusFont, "QTipLabel");
-    QApplication::setFont(statusFont, "QStatusBar");
-    QApplication::setFont(titleFont, "QTitleBar");
-    QApplication::setFont(smallTitleFont, "QDockWidgetTitle");
-
   goto done;
   simple: {
    #ifndef QT_NO_DEBUG
@@ -421,8 +410,22 @@ static void qt_set_windows_resources()
     LOGFONTA lf;
     HGDIOBJ stockFont = GetStockObject(SYSTEM_FONT);
     GetObjectA(stockFont, sizeof(lf), &lf);
-    QApplication::setFont(qt_LOGFONTtoQFont((LOGFONT&)lf, true,'A'));
+    menuFont = qt_LOGFONTtoQFont((LOGFONT&)lf, true,'A');
+    titleFont = menuFont;
+    stockFont = GetStockObject(ANSI_VAR_FONT);
+    GetObjectA(stockFont, sizeof(lf), &lf);
+    messageFont = qt_LOGFONTtoQFont((LOGFONT&)lf, true,'A');
+    statusFont = messageFont;
+    smallTitleFont = messageFont;
   } done:
+
+    QApplication::setFont(menuFont, "QMenu");
+    QApplication::setFont(menuFont, "QMenuBar");
+    QApplication::setFont(messageFont, "QMessageBox");
+    QApplication::setFont(statusFont, "QTipLabel");
+    QApplication::setFont(statusFont, "QStatusBar");
+    QApplication::setFont(titleFont, "QTitleBar");
+    QApplication::setFont(smallTitleFont, "QDockWidgetTitle");
 
     // Do the color settings
     QPalette pal;
