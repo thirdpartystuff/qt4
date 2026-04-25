@@ -395,7 +395,13 @@ static void qt_set_windows_resources()
         NONCLIENTMETRICSA ncm;
         ncm.cbSize = sizeof(ncm);
         if (!SystemParametersInfoA(SPI_GETNONCLIENTMETRICS, sizeof(ncm), &ncm, 0)) goto simple;
-        menuFont = qt_LOGFONTtoQFont((LOGFONT&)ncm.lfMenuFont,true,'A');
+        if (isWin32s()) {
+            LOGFONTA lf;
+            HGDIOBJ stockFont = GetStockObject(SYSTEM_FONT);
+            GetObjectA(stockFont, sizeof(lf), &lf);
+            menuFont = qt_LOGFONTtoQFont((LOGFONT&)lf, true,'A');
+        } else
+            menuFont = qt_LOGFONTtoQFont((LOGFONT&)ncm.lfMenuFont,true,'A');
         messageFont = qt_LOGFONTtoQFont((LOGFONT&)ncm.lfMessageFont,true,'A');
         statusFont = qt_LOGFONTtoQFont((LOGFONT&)ncm.lfStatusFont,true,'A');
         titleFont = qt_LOGFONTtoQFont((LOGFONT&)ncm.lfCaptionFont,true,'A');
@@ -516,7 +522,7 @@ static void qt_set_windows_resources()
                       menu.color(QPalette::Active, QPalette::Foreground));
         menu.setColor(QPalette::Inactive, QPalette::ButtonText,
                       menu.color(QPalette::Active, QPalette::ButtonText));
-        if (QSysInfo::WindowsVersion != QSysInfo::WV_NT && QSysInfo::WindowsVersion != QSysInfo::WV_95)
+        if (QSysInfo::WindowsVersion != QSysInfo::WV_NT && QSysInfo::WindowsVersion != QSysInfo::WV_95 && QSysInfo::WindowsVersion != QSysInfo::WV_32s)
             menu.setColor(QPalette::Inactive, QPalette::ButtonText,
                           pal.color(QPalette::Inactive, QPalette::Dark));
         QApplication::setPalette(menu, "QMenu");
