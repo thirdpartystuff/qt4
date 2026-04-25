@@ -24,6 +24,8 @@
 #ifndef QT_WINDOWS_H
 #define QT_WINDOWS_H
 
+#include <qglobal.h>
+
 #if defined(Q_CC_BOR)
 // Borland's windows.h does not set these correctly, resulting in
 // unusable WinSDK standard dialogs
@@ -91,9 +93,15 @@
 extern "C" {
 #endif
 
-bool isWinNT(void);
-bool isWin32s(void);
-bool useWide(void);
+extern int qt_win_major;
+extern int qt_win_minor;
+
+#ifdef __cplusplus
+inline bool isWinLegacyGUI() { return QSysInfo::WindowsVersion == QSysInfo::WV_32s || (QSysInfo::WindowsVersion == QSysInfo::WV_NT && qt_win_major == 3); }
+inline bool isWinNT(void) { return ((QSysInfo::WindowsVersion & QSysInfo::WV_DOS_based) == 0); }
+inline bool isWin32s(void) { return QSysInfo::WindowsVersion == QSysInfo::WV_32s; }
+inline bool useWide(void) { return ((QSysInfo::WindowsVersion & QSysInfo::WV_DOS_based) == 0); }
+#endif
 
 typedef int (WINAPI* PFNCOMPARESTRINGA)(LCID, DWORD, LPCSTR, int, LPCSTR, int);
 typedef int (WINAPI* PFNGETDATEFORMATA)(LCID, DWORD, const SYSTEMTIME*, LPCSTR, LPSTR, int);

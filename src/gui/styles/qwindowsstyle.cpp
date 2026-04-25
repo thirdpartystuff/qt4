@@ -1438,15 +1438,29 @@ void QWindowsStyle::drawControl(ControlElement ce, const QStyleOption *opt, QPai
             bool hasFocus = mbi->state & State_HasFocus;
             bool down = mbi->state & State_Sunken;
             QStyleOptionMenuItem newMbi = *mbi;
-            p->fillRect(mbi->rect, mbi->palette.brush(QPalette::Button));
+          #ifdef Q_OS_WIN
+            const bool legacy = isWinLegacyGUI();
+          #else
+            const bool legacy = false;
+          #endif
+            if (!legacy)
+                p->fillRect(mbi->rect, mbi->palette.brush(QPalette::Button));
+            else {
+                const QStyleOptionMenuItem* menuitem = qstyleoption_cast<const QStyleOptionMenuItem*>(opt);
+                if (menuitem) {
+                    QBrush fill = menuitem->palette.brush(active ? QPalette::Highlight : QPalette::Button);
+                    p->fillRect(menuitem->rect, fill);
+                } else
+                    p->fillRect(mbi->rect, mbi->palette.brush(QPalette::Button));
+            }
             if (active || hasFocus) {
                 QBrush b = mbi->palette.brush(QPalette::Button);
-                if (active && down)
+                if (active && down && !legacy)
                     p->setBrushOrigin(p->brushOrigin() + QPoint(1, 1));
-                if (active && hasFocus)
+                if (active && hasFocus && !legacy)
                     qDrawShadeRect(p, mbi->rect.x(), mbi->rect.y(), mbi->rect.width(),
                                    mbi->rect.height(), mbi->palette, active && down, 1, 0, &b);
-                if (active && down) {
+                if (active && down && !legacy) {
                     newMbi.rect.translate(pixelMetric(PM_ButtonShiftHorizontal, mbi, widget),
                                        pixelMetric(PM_ButtonShiftVertical, mbi, widget));
                     p->setBrushOrigin(p->brushOrigin() - QPoint(1, 1));

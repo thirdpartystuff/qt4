@@ -746,6 +746,11 @@ void QCommonStyle::drawControl(ControlElement element, const QStyleOption *opt,
         break;
     case CE_MenuBarItem:
         if (const QStyleOptionMenuItem *mbi = qstyleoption_cast<const QStyleOptionMenuItem *>(opt)) {
+          #ifdef Q_OS_WIN
+            const bool legacy = isWinLegacyGUI();
+          #else
+            const bool legacy = false;
+          #endif
             uint alignment = Qt::AlignCenter | Qt::TextShowMnemonic | Qt::TextDontClip
                             | Qt::TextSingleLine;
             if (!styleHint(SH_UnderlineShortcut, mbi, widget))
@@ -755,7 +760,7 @@ void QCommonStyle::drawControl(ControlElement element, const QStyleOption *opt,
                 drawItemPixmap(p,mbi->rect, alignment, pix);
             else
                 drawItemText(p, mbi->rect, alignment, mbi->palette, mbi->state & State_Enabled,
-                             mbi->text, QPalette::ButtonText);
+                             mbi->text, (mbi->state & State_Selected && legacy ? QPalette::HighlightedText : QPalette::ButtonText));
         }
         break;
     case CE_MenuBarEmptyArea:

@@ -127,9 +127,6 @@ PFNWSASOCKETA pfnWSASocketA;
 PFNWSASOCKETW pfnWSASocketW;
 PFNWSASTARTUP pfnWSAStartup;
 PFN__WSAFDISSET pfn__WSAFDIsSet;
-bool isWinNT(void) { return ((QSysInfo::WindowsVersion & QSysInfo::WV_DOS_based) == 0); }
-bool isWin32s(void) { return QSysInfo::WindowsVersion == QSysInfo::WV_32s; }
-bool useWide(void) { return ((QSysInfo::WindowsVersion & QSysInfo::WV_DOS_based) == 0); }
 #endif
 
 /*!
@@ -1465,6 +1462,9 @@ const QSysInfo::MacVersion QSysInfo::MacintoshVersion = macVersion();
 typedef BOOL (WINAPI *PFNGETVERSIONEXA)(LPOSVERSIONINFOA lpVersionInformation);
 typedef BOOL (WINAPI *PFNGETVERSIONEXW)(LPOSVERSIONINFOW lpVersionInformation);
 
+int qt_win_major;
+int qt_win_minor;
+
 static QSysInfo::WinVersion winVersion()
 {
 #ifndef VER_PLATFORM_WIN32s
@@ -1504,6 +1504,8 @@ static QSysInfo::WinVersion winVersion()
         else
             osver.dwPlatformId = VER_PLATFORM_WIN32s;
     }
+    qt_win_major = osver.dwMajorVersion;
+    qt_win_minor = osver.dwMinorVersion;
     qt_cever = osver.dwMajorVersion * 100;
     qt_cever += osver.dwMinorVersion * 10;
     switch (osver.dwPlatformId) {
